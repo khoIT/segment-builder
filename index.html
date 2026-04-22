@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1440" />
+  <title>LiveOps Engine — VNGGames Player Hub</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/colors_and_type.css">
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: "Inter", sans-serif; color: #0a0a0a; background: #fafafa; }
+    #root { height: 100vh; overflow: hidden; }
+
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 currentColor; }
+      50%     { box-shadow: 0 0 0 4px rgba(22,101,52,0); }
+    }
+    @keyframes live-pulse {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.65; }
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); background-clip: padding-box; border: 2px solid transparent; }
+
+    ::selection { background: rgba(240, 90, 34, 0.2); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

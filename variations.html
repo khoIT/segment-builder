@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Segment Builder — Variations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: "Inter", sans-serif; background: #f0eee9; color: #0a0a0a; }
+  @keyframes pulse-dot { 0%,100% { box-shadow: 0 0 0 0 currentColor; } 50% { box-shadow: 0 0 0 4px rgba(22,101,52,0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script type="text/babel" src="src/theme.jsx" data-presets="react"></script>
+<script type="text/babel" src="src/data.jsx" data-presets="react"></script>
+<script type="text/babel" src="design-canvas.jsx" data-presets="react"></script>
+
+<script type="text/babel" data-presets="react">
+/* global React, ReactDOM, T, Icon, Button, Badge, Card, Input, Select, DesignCanvas, DCSection, DCArtboard, FEATURES */
+
+// ─── A · Node canvas (mini) ───────────────────────────────────────
+function NodeCanvasVariant() {
+  const nodes = [
+    { id: 's', kind: 'source', label: 'PTG Players', size: '2.4M', x: 20,  y: 40,  icon: 'users',   game: 'PTG' },
+    { id: 'f1', kind: 'filter', label: 'purchase_amount_30d ≥ 50', x: 240, y: 20,  icon: 'filter', matches: '68.2K' },
+    { id: 'f2', kind: 'filter', label: 'churn_risk ≥ 0.6', x: 240, y: 120,  icon: 'sparkles', matches: '184K', ml: true },
+    { id: 'a', kind: 'op',     label: 'AND', x: 500, y: 80,  icon: 'git-merge' },
+    { id: 'o', kind: 'output', label: 'Segment', size: '18,420', x: 660, y: 80, icon: 'target' },
+  ];
+  const edges = [['s','f1'],['s','f2'],['f1','a'],['f2','a'],['a','o']];
+  const bezier = (x1,y1,x2,y2) => { const dx = Math.max(40, Math.abs(x2-x1)*0.5); return `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`; };
+  const nw = 150, nh = 60;
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 280, background: '#fafafa',
+      backgroundImage: `radial-gradient(circle, #d4d4d4 1px, transparent 1px)`, backgroundSize: '16px 16px',
+      borderRadius: 10, overflow: 'hidden' }}>
+      <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} width="100%" height="100%">
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
+            <path d="M0 0 L6 5 L0 10 Z" fill="#737373" />
+          </marker>
+        </defs>
+        {edges.map(([from,to],i)=>{
+          const a = nodes.find(n=>n.id===from), b = nodes.find(n=>n.id===to);
+          return <path key={i} d={bezier(a.x+nw, a.y+nh/2, b.x, b.y+nh/2)} stroke="#737373" strokeWidth="1.5" fill="none" markerEnd="url(#arr)" />;
+        })}
+      </svg>
+      {nodes.map(n => {
+        const p = {
+          source: { bg: '#eff6ff', bd: '#bfdbfe', hd: '#1e40af' },
+          filter: { bg: '#fff', bd: T.brandBorder, hd: T.brand },
+          op:     { bg: '#fff', bd: T.n300, hd: T.n800 },
+          output: { bg: '#fff', bd: '#d1fae5', hd: T.green600 },
+        }[n.kind];
+        return (
+          <div key={n.id} style={{ position:'absolute', left:n.x, top:n.y, width:nw, height:nh, background:p.bg, border:`1px solid ${p.bd}`, borderRadius:8, overflow:'hidden', fontFamily:T.fSans, boxShadow:'0 1px 2px rgba(0,0,0,0.06)' }}>
+            <div style={{ padding:'4px 8px', display:'flex', alignItems:'center', gap:6, color:p.hd, fontSize:9, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', borderBottom:`1px solid ${p.bd}` }}>
+              <Icon name={n.icon} size={10}/> {n.kind}
+            </div>
+            <div style={{ padding:6, fontSize:10.5, fontWeight:500, color:T.n900 }}>
+              {n.label}
+              {n.matches && <div style={{ fontFamily:T.fMono, fontSize:9, color:T.n500, marginTop:2 }}>≈ {n.matches} matches</div>}
+              {n.size && <div style={{ fontFamily:T.fDisp, fontSize:16, color:T.n950, lineHeight:1.1, textTransform:'uppercase' }}>{n.size}</div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── B · Sidebar variant (mini) ────────────────────────────
+function SidebarVariant() {
+  return (
+    <div style={{ padding:16, background:'#fff', borderRadius:10, border:`1px solid ${T.n200}`, height:'100%', fontFamily:T.fSans }}>
+      <div style={{ fontSize:11, fontWeight:600, color:T.n500, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:10 }}>Filters · AND</div>
+      {[
+        { f:'purchase_amount_30d', op:'≥ 50 USD', m:'68.2K' },
+        { f:'sessions_last_7d',    op:'≥ 3 sessions', m:'942K' },
+        { f:'churn_risk_score',    op:'≥ 0.6',    m:'184K', ml:true },
+      ].map((r,i)=>(
+        <div key={i} style={{ padding:10, borderRadius:8, border:`1px solid ${T.n200}`, marginBottom:8, display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ width:24, height:24, borderRadius:6, background:r.ml?'#faf5ff':T.brandSoft, color:r.ml?T.purple500:T.brand, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <Icon name={r.ml?'sparkles':'filter'} size={12}/>
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:T.fMono, fontSize:11, fontWeight:600, color:T.n900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.f}</div>
+            <div style={{ fontFamily:T.fSans, fontSize:10, color:T.n500 }}>{r.op} · {r.m}</div>
+          </div>
+        </div>
+      ))}
+      <button style={{ width:'100%', padding:8, borderRadius:8, border:`1px dashed ${T.n300}`, background:'transparent', color:T.n500, fontSize:11, fontWeight:500, cursor:'pointer' }}>+ Add filter</button>
+      <div style={{ marginTop:14, padding:12, borderRadius:8, background:T.brandSoft, border:`1px solid ${T.brandBorder}` }}>
+        <div style={{ fontSize:10, color:T.brand, fontWeight:600, letterSpacing:'0.04em', textTransform:'uppercase' }}>Live size</div>
+        <div style={{ fontFamily:T.fDisp, fontSize:28, color:T.n950, lineHeight:1, textTransform:'uppercase' }}>18,420</div>
+        <div style={{ fontSize:11, color:T.green600, fontWeight:600, marginTop:2 }}>+312 / 24h ↑</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── C · Wizard variant (mini) ──────────────────────────────
+function WizardVariant() {
+  const steps = [
+    { l:'Population',   i:'users', done:true },
+    { l:'Filters',      i:'filter', done:true },
+    { l:'Layer ML',     i:'sparkles', active:true },
+    { l:'Activate',     i:'rocket' },
+  ];
+  return (
+    <div style={{ padding:16, background:'#fff', borderRadius:10, border:`1px solid ${T.n200}`, height:'100%', fontFamily:T.fSans }}>
+      <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:16 }}>
+        {steps.map((s,i)=>(
+          <React.Fragment key={i}>
+            <div style={{ flex:1, padding:'6px 4px', borderRadius:6, background:s.active?T.brandSoft:s.done?'#ecfdf5':T.n50, border:`1px solid ${s.active?T.brandBorder:s.done?'#d1fae5':T.n200}`, display:'flex', alignItems:'center', gap:6, minWidth:0 }}>
+              <div style={{ width:18, height:18, borderRadius:9999, background:s.active?T.brand:s.done?T.green600:T.n300, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:700, flexShrink:0 }}>{s.done?'✓':i+1}</div>
+              <span style={{ fontSize:10, fontWeight:600, color:s.active?T.brand:s.done?T.green600:T.n600, overflow:'hidden', textOverflow:'ellipsis' }}>{s.l}</span>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ fontSize:11, fontWeight:600, color:T.brand, textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:4 }}>Step 3 of 4</div>
+      <div style={{ fontFamily:T.fDisp, fontSize:22, color:T.n950, textTransform:'uppercase', marginBottom:12, lineHeight:1.05 }}>Layer in a propensity model</div>
+
+      {[
+        { n:'PTG Churn v4', t:'Will churn in 14d', auc:0.87, sel:true },
+        { n:'PTG Pay v7',   t:'Will spend $5+ in 7d', auc:0.81 },
+        { n:'Skip', t:'Rule-based only' },
+      ].map((m,i)=>(
+        <div key={i} style={{ padding:10, borderRadius:8, border:`2px solid ${m.sel?T.brand:T.n200}`, background:m.sel?T.brandSoft:'#fff', marginBottom:6, display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:14, height:14, borderRadius:9999, border:`2px solid ${m.sel?T.brand:T.n300}`, background:m.sel?T.brand:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            {m.sel&&<div style={{width:5,height:5,borderRadius:9999,background:'#fff'}}/>}
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:11, fontWeight:600, color:T.n900 }}>{m.n}</div>
+            <div style={{ fontSize:10, color:T.n500 }}>{m.t}</div>
+          </div>
+          {m.auc && <div style={{ fontFamily:T.fMono, fontSize:10, color:T.n700, fontWeight:600 }}>AUC {m.auc}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── D · Natural language variant ─────────────────────────
+function NLVariant() {
+  return (
+    <div style={{ padding:16, background:'#fff', borderRadius:10, border:`1px solid ${T.n200}`, height:'100%', fontFamily:T.fSans }}>
+      <div style={{ fontSize:11, fontWeight:600, color:T.n500, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:8 }}>Describe your segment</div>
+      <div style={{ padding:12, borderRadius:10, border:`1px solid ${T.n300}`, background:T.n50, fontSize:13, color:T.n900, lineHeight:1.5, marginBottom:12, fontFamily:T.fSans }}>
+        <span style={{ background:T.brandSoft, color:T.brand, padding:'1px 6px', borderRadius:4, fontWeight:600 }}>PTG players</span>{' '}
+        who spent <span style={{ background:T.brandSoft, color:T.brand, padding:'1px 6px', borderRadius:4, fontWeight:600 }}>more than $50</span>{' '}
+        in the last 30 days, and{' '}
+        <span style={{ background:'#faf5ff', color:T.purple500, padding:'1px 6px', borderRadius:4, fontWeight:600 }}>likely to churn</span>{' '}
+        within 14 days.
+      </div>
+      <div style={{ fontSize:11, fontWeight:600, color:T.n500, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:8 }}>Interpreted as</div>
+      <pre style={{ margin:0, padding:10, background:T.n950, color:T.n100, borderRadius:8, fontFamily:T.fMono, fontSize:10.5, lineHeight:1.5, whiteSpace:'pre-wrap' }}>
+{`game = 'PTG'
+AND purchase_amount_30d > 50
+AND churn_risk_score >= 0.6`}
+      </pre>
+      <div style={{ marginTop:12, padding:10, borderRadius:8, background:'#ecfdf5', border:`1px solid #d1fae5`, display:'flex', alignItems:'center', gap:8 }}>
+        <Icon name="check-circle" size={14} color={T.green600} />
+        <span style={{ fontSize:11, color:T.green600, fontWeight:600 }}>Parsed · 18,420 players match</span>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, []);
+  return (
+    <DesignCanvas>
+      <DCSection id="builder" title="Segment Builder — Layout explorations" subtitle="Four approaches to composing a segment — from free-form canvas to narrative.">
+        <DCArtboard id="a" label="A · Node canvas (recommended)" width={860} height={320}>
+          <NodeCanvasVariant />
+        </DCArtboard>
+        <DCArtboard id="b" label="B · Sidebar / list" width={340} height={420}>
+          <SidebarVariant />
+        </DCArtboard>
+        <DCArtboard id="c" label="C · Guided wizard" width={420} height={420}>
+          <WizardVariant />
+        </DCArtboard>
+        <DCArtboard id="d" label="D · Natural language (novel)" width={420} height={360}>
+          <NLVariant />
+        </DCArtboard>
+      </DCSection>
+      <DCSection id="notes" title="Notes" subtitle="Node canvas is the hero — sidebar & wizard are fallback ergonomics for non-technical LiveOps managers. NL is an aspirational future direction.">
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
