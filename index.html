@@ -3,14 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=1440" />
-  <title>LiveOps Engine — VNGGames GDS</title>
+  <title>Bedrock · VNGGames</title>
+
+  <link rel="icon" type="image/png" href="/assets/logo/appmark-dark.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
+  <!-- Inter + Geist Mono from Google Fonts; League Gothic is self-hosted below. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/colors_and_type.css">
 
   <style>
+    /* Self-host League Gothic (display font for numbers + headlines). */
+    @font-face {
+      font-family: 'League Gothic';
+      src: url('/fonts/LeagueGothic-Regular-VariableFont_wdth.ttf') format('truetype-variations'),
+           url('/fonts/LeagueGothic-Regular-VariableFont_wdth.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; height: 100%; font-family: "Inter", sans-serif; color: #0a0a0a; background: #fafafa; }
     #root { height: 100vh; overflow: hidden; }

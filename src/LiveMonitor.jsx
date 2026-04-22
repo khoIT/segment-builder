@@ -1,7 +1,10 @@
 import React from 'react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
-import { SEGMENTS, SEGMENT_SERIES, OVERLAP, DRIFT_ALERTS, RETENTION, FUNNEL, ARPU_SERIES, GAMES, CAMPAIGNS } from './data.jsx';
+import { GAMES, SEGMENTS, SEGMENT_SERIES, OVERLAP, DRIFT_ALERTS, RETENTION, FUNNEL, ARPU_SERIES, CAMPAIGNS } from './data.jsx';
+
+/* global React, Recharts, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline, SEGMENTS, SEGMENT_SERIES, OVERLAP, DRIFT_ALERTS, RETENTION, FUNNEL, ARPU_SERIES, GAMES, CAMPAIGNS */
+
 
 // pack series data into recharts-friendly shape
 function packSeries(keys, series) {
@@ -363,5 +366,7 @@ function LiveMonitor({ chartType = 'area' }) {
     </div>
   );
 }
+
+Object.assign(window, { LiveMonitor });
 
 export { LiveMonitor };

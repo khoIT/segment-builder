@@ -1,7 +1,10 @@
 import React from 'react';
 import { LineChart as LC2, Line as Ln2, AreaChart as AC2, Area as Ar2, BarChart as BC2, Bar as Br2, XAxis as XA2, YAxis as YA2, CartesianGrid as CG2, Tooltip as TT2, ResponsiveContainer as RC2 } from 'recharts';
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline } from './theme.jsx';
-import { CONNECTORS, TABLES, FEATURES, MODELS, CAMPAIGNS, SEGMENTS, GAMES, SAMPLE_ROWS } from './data.jsx';
+import { GAMES, CONNECTORS, TABLES, FEATURES, MODELS, SEGMENTS, CAMPAIGNS, SAMPLE_ROWS } from './data.jsx';
+
+/* global React, Recharts, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline, CONNECTORS, TABLES, FEATURES, MODELS, CAMPAIGNS, SEGMENTS, GAMES, SAMPLE_ROWS */
+
 
 // ─── Data Connectors ────────────────────────────────────────────
 function ConnectorIcon({ type, size = 28 }) {
@@ -701,5 +704,7 @@ function GameAnalytics() {
     </div>
   );
 }
+
+Object.assign(window, { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics });
 
 export { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics };

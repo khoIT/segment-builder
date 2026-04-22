@@ -108,3 +108,11 @@ worktrees/
 # Generated OpenCode backup from scripts/generate-opencode.py --force
 .opencode.backup/
 .opencode
+
+# Stray root-level asset dirs from extracting "Segment Builder.zip" in-place
+# (only needed when opening `LiveOps Engine.html` directly from the filesystem).
+# Canonical copies that Vite serves live under public/.
+/assets/
+/fonts/
+/uploads/
+/screenshots/

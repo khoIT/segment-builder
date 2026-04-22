@@ -1,6 +1,9 @@
 import React from 'react';
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
-import { GAMES, FEATURES, SEGMENT_SERIES, SEGMENTS } from './data.jsx';
+import { GAMES, SEGMENTS, FEATURES, SEGMENT_SERIES } from './data.jsx';
+import { BR_METRICS, BR_METRIC_CATEGORIES } from './bedrockData.jsx';
+
+/* global React, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline, GAMES, FEATURES, SEGMENT_SERIES, SEGMENTS, BR_METRICS, BR_METRIC_CATEGORIES */
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Node-based Segment Builder
@@ -111,8 +114,21 @@ function NodePalette({ onAdd }) {
   );
 }
 
+const ScheduleModeContext = React.createContext('scheduled');
+
 function FilterNodeBody({ node, onUpdate }) {
-  const feats = FEATURES.map(f => ({ value: f.name, label: f.name }));
+  const scheduleMode = React.useContext(ScheduleModeContext);
+  const isLive = scheduleMode === 'live';
+  const seen = new Set();
+  const available = BR_METRICS.filter(m => {
+    if (isLive && !m.realtime) return false;
+    if (seen.has(m.name)) return false;
+    seen.add(m.name);
+    return true;
+  });
+  const feats = available.map(f => ({ value: f.name, label: f.name }));
+  const currentMetric = BR_METRICS.find(m => m.name === node.feature);
+  const incompatible = isLive && currentMetric && !currentMetric.realtime;
   return (
     <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
       <Select size="sm" value={node.feature} onChange={e => onUpdate({ feature: e.target.value })} options={feats} style={{ width: '100%' }} />
@@ -122,10 +138,16 @@ function FilterNodeBody({ node, onUpdate }) {
           style={{ width: 60, padding: '0 18px 0 8px' }} />
         <Input size="sm" value={node.value} onChange={e => onUpdate({ value: e.target.value })} style={{ flex: 1 }} />
       </div>
-      <div style={{ fontFamily: T.fMono, fontSize: 10, color: T.n500, display: 'flex', justifyContent: 'space-between' }}>
-        <span>{node.unit}</span>
-        <span>≈ {node.matches} match</span>
-      </div>
+      {incompatible ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 5, background: '#fef3c7', color: '#b45309', fontSize: 10, fontFamily: T.fMono }}>
+          <Icon name="alert-triangle" size={10} /> Not realtime-capable
+        </div>
+      ) : (
+        <div style={{ fontFamily: T.fMono, fontSize: 10, color: T.n500, display: 'flex', justifyContent: 'space-between' }}>
+          <span>{node.unit}{currentMetric?.realtime && <span style={{ color: T.brand, marginLeft: 4 }}>⚡ realtime</span>}</span>
+          <span>≈ {node.matches} match</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -320,7 +342,113 @@ WHERE game = 'PTG'
   );
 }
 
-function SegmentPreview({ size = 18420 }) {
+// ═══════════════════════════════════════════════════════════════════════
+// Scheduling mode selector — frozen / scheduled / live
+// Realtime (live) restricts filter metrics to realtime-capable ones.
+// ═══════════════════════════════════════════════════════════════════════
+function ScheduleBar({ mode, onMode, crossGame, onCrossGame, source, target, onSource, onTarget }) {
+  const modes = [
+    { v: 'frozen',    label: 'Frozen snapshot', icon: 'lock',       desc: 'Compute once, never update', sub: 'A/B control groups', cost: '$0.02 once' },
+    { v: 'scheduled', label: 'Scheduled',       icon: 'refresh-cw', desc: 'Refresh every 4 hours',      sub: 'Default for campaigns', cost: '$1.20/day' },
+    { v: 'live',      label: 'Live streaming',  icon: 'zap',        desc: 'Kafka-driven, 1m lag',       sub: 'For realtime triggers', cost: '$8.40/day' },
+  ];
+  useLucide(mode + crossGame);
+  return (
+    <div style={{
+      padding: '12px 20px', background: '#fff', borderBottom: `1px solid ${T.n200}`,
+      display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0,
+    }}>
+      {/* Row 1: scheduling modes */}
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: T.n500, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', marginRight: 4 }}>
+          Scheduling
+        </div>
+        {modes.map(m => {
+          const active = mode === m.v;
+          return (
+            <div key={m.v} onClick={() => onMode(m.v)} style={{
+              flex: 1, padding: '8px 12px', borderRadius: 9, cursor: 'pointer',
+              background: active ? (m.v === 'live' ? T.brandSoft : T.n50) : '#fff',
+              border: `1px solid ${active ? (m.v === 'live' ? T.brandBorder : T.n300) : T.n200}`,
+              display: 'flex', alignItems: 'center', gap: 10,
+              boxShadow: active ? `0 0 0 3px ${m.v === 'live' ? 'rgba(240,90,34,0.08)' : 'rgba(0,0,0,0.03)'}` : 'none',
+            }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                background: active ? (m.v === 'live' ? T.brand : T.n900) : T.n100,
+                color: active ? '#fff' : T.n500,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}><Icon name={m.icon} size={13} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: T.n900 }}>{m.label}</span>
+                  {m.v === 'live' && <Badge variant="brandSoft" style={{ padding: '0 5px', fontSize: 9 }}>Kafka</Badge>}
+                </div>
+                <div style={{ fontSize: 10.5, color: T.n500, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.desc}</div>
+              </div>
+              <div style={{ fontFamily: T.fMono, fontSize: 10, color: T.n600, textAlign: 'right', flexShrink: 0 }}>{m.cost}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Row 2: cross-game source → target (only if enabled) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: T.n500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Population</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, background: T.n50, border: `1px solid ${T.n200}`, flex: crossGame ? 'none' : 1 }}>
+          <Icon name="users" size={13} color={T.n600} />
+          <span style={{ fontSize: 11, color: T.n500 }}>{crossGame ? 'Source' : 'From'}</span>
+          <Select size="sm" value={source} onChange={onSource} options={[
+            { value: 'ALL', label: 'All players (6.2M)' },
+            { value: 'PTG', label: 'PTG · 2.4M' },
+            { value: 'CFM', label: 'CFM · 1.8M' },
+            { value: 'TFB', label: 'TFB · 920K' },
+          ]} />
+        </div>
+        {crossGame && (
+          <>
+            <Icon name="arrow-right" size={14} color={T.n400} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, background: T.brandSoft, border: `1px solid ${T.brandBorder}`, flex: 1 }}>
+              <Icon name="target" size={13} color={T.brand} />
+              <span style={{ fontSize: 11, color: T.brand, fontWeight: 600 }}>Target in</span>
+              <Select size="sm" value={target} onChange={onTarget} options={[
+                { value: 'PTG', label: 'Play Together' },
+                { value: 'CFM', label: 'Call of Duty Mobile' },
+                { value: 'TFB', label: 'Total Football' },
+              ]} />
+              <div style={{ width: 1, height: 16, background: T.brandBorder }} />
+              <span style={{ fontSize: 11, color: T.n600 }}>ID match via</span>
+              <Select size="sm" value="vng_account" onChange={() => {}} options={[
+                { value: 'vng_account', label: 'VNG Account ID' },
+                { value: 'device_id', label: 'Device ID (fuzzy)' },
+                { value: 'phone', label: 'Phone hash' },
+              ]} />
+              <div style={{ padding: '3px 8px', borderRadius: 9999, background: '#ecfdf5', color: T.green600, fontSize: 10, fontWeight: 600, fontFamily: T.fMono }}>
+                67% resolved
+              </div>
+            </div>
+          </>
+        )}
+        <Button variant={crossGame ? 'outline' : 'ghost'} size="sm" leftIcon={crossGame ? 'x' : 'git-branch'} onClick={() => onCrossGame(!crossGame)}>
+          {crossGame ? 'Remove cross-game' : 'Target a different game'}
+        </Button>
+      </div>
+
+      {/* Row 3: live-only banner */}
+      {mode === 'live' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, background: T.brandSoft, border: `1px solid ${T.brandBorder}` }}>
+          <Icon name="zap" size={13} color={T.brand} />
+          <div style={{ flex: 1, fontSize: 11, color: '#7c2d12' }}>
+            <strong style={{ color: T.brand }}>Live streaming mode active.</strong> Filters are limited to <strong>{BR_METRICS.filter(m => m.realtime).length} realtime-capable metrics</strong>. Non-realtime metrics (e.g. <code style={{ fontFamily: T.fMono, background: '#fff', padding: '1px 5px', borderRadius: 3, color: T.n700 }}>ltv</code>, <code style={{ fontFamily: T.fMono, background: '#fff', padding: '1px 5px', borderRadius: 3, color: T.n700 }}>churn_risk_score</code>) are greyed out in the filter picker.
+          </div>
+          <Badge variant="mlSoft">Kafka: ptg.session, ptg.purchase</Badge>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SegmentPreview({ size = 18420, mode }) {
   // top strip above the builder — live size + tiny chart
   const series = SEGMENT_SERIES.s_ptg_whales;
   return (
@@ -354,7 +482,9 @@ function SegmentPreview({ size = 18420 }) {
         <div style={{ fontFamily: T.fSans, fontSize: 14, fontWeight: 600, color: T.n900 }}>₫ 1.2B ARPU/month</div>
       </div>
       <div style={{ flex: 1 }} />
-      <Badge variant="live" dot>Computing · 24s ago</Badge>
+      {mode === 'live' && <Badge variant="live" dot>Streaming · 1.8s lag</Badge>}
+      {mode === 'scheduled' && <Badge variant="info" dot>Next refresh in 2h 14m</Badge>}
+      {mode === 'frozen' && <Badge variant="secondary" leftIcon="lock">Frozen @ 2026-04-22 14:30</Badge>}
       <Button variant="outline" size="sm" leftIcon="eye">Preview users</Button>
       <Button variant="outline" size="sm" leftIcon="code">View SQL</Button>
       <Button variant="primary" size="sm" leftIcon="rocket">Activate segment</Button>
@@ -368,8 +498,12 @@ function SegmentBuilder() {
   const [drag, setDrag] = React.useState(null); // {id, offX, offY}
   const [wire, setWire] = React.useState(null); // {from, x, y}
   const [pan, setPan] = React.useState({ x: 0, y: 0, scale: 1 });
+  const [scheduleMode, setScheduleMode] = React.useState('scheduled');
+  const [crossGame, setCrossGame] = React.useState(false);
+  const [source, setSource] = React.useState('PTG');
+  const [target, setTarget] = React.useState('CFM');
   const canvasRef = React.useRef(null);
-  useLucide(graph);
+  useLucide(graph + scheduleMode + crossGame);
 
   const updateNode = (id, patch) => setGraph(g => ({ ...g, nodes: { ...g.nodes, [id]: { ...g.nodes[id], ...patch } } }));
   const deleteNode = (id) => setGraph(g => {
@@ -419,8 +553,15 @@ function SegmentBuilder() {
   const viewportW = 1600, viewportH = 900;
 
   return (
+    <ScheduleModeContext.Provider value={scheduleMode}>
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.n50 }}>
-      <SegmentPreview />
+      <ScheduleBar
+        mode={scheduleMode} onMode={setScheduleMode}
+        crossGame={crossGame} onCrossGame={setCrossGame}
+        source={source} onSource={setSource}
+        target={target} onTarget={setTarget}
+      />
+      <SegmentPreview mode={scheduleMode} />
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <NodePalette onAdd={addNode} />
 
@@ -497,7 +638,10 @@ function SegmentBuilder() {
         <PropertiesPanel graph={graph} selected={selected} onUpdate={updateNode} onDelete={deleteNode} />
       </div>
     </div>
+    </ScheduleModeContext.Provider>
   );
 }
+
+Object.assign(window, { SegmentBuilder });
 
 export { SegmentBuilder };

@@ -116,6 +116,7 @@ const Badge = ({ variant = 'secondary', children, dot, leftIcon, style }) => {
     neutral:     { bg: T.n900, fg: '#fff' },
     brand:       { bg: T.brand, fg: '#fff' },
     brandSoft:   { bg: T.brandSoft, fg: T.brand, bd: T.brandBorder },
+    mlSoft:      { bg: T.purpleSoft, fg: T.purple500, bd: '#e9d5ff' },
     secondary:   { bg: T.n100, fg: T.n900 },
     outline:     { bg: '#fff', fg: T.n800, bd: T.n200 },
     destructive: { bg: '#fee2e2', fg: '#991b1b' },

@@ -3,6 +3,11 @@ import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Avatar 
 import { SegmentBuilder } from './SegmentBuilder.jsx';
 import { LiveMonitor } from './LiveMonitor.jsx';
 import { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics } from './Screens.jsx';
+import { Sources } from './Sources.jsx';
+import { MappingStudio } from './MappingStudio.jsx';
+import { MasterTables } from './MasterTables.jsx';
+import { MetricsCatalog } from './MetricsCatalog.jsx';
+import { FreshnessSLAs } from './FreshnessSLAs.jsx';
 
 // ═══════════════════════════════════════════════════════════════════════
 // TWEAKS — tweakable defaults
@@ -15,51 +20,53 @@ const TWEAKS = /*EDITMODE-BEGIN*/{
   "accentColor": "#f05a22"
 }/*EDITMODE-END*/;
 
+// New IA: Catalog · Intelligence · Activation.
 const NAV = [
-  {
-    group: 'Data', items: [
-      { id: 'connectors', label: 'Data connectors', icon: 'database' },
-      { id: 'explorer', label: 'Raw data explorer', icon: 'table-2' },
-    ]
-  },
-  {
-    group: 'Modeling', items: [
-      { id: 'features', label: 'Feature builder', icon: 'function-square' },
-      { id: 'models', label: 'Propensity models', icon: 'sparkles' },
-    ]
-  },
-  {
-    group: 'Segments', items: [
-      { id: 'builder', label: 'Segment builder', icon: 'share-2', primary: true },
-      { id: 'monitor', label: 'Live segment monitor', icon: 'radio', live: true },
-    ]
-  },
-  {
-    group: 'Activation', items: [
-      { id: 'campaigns', label: 'Campaigns', icon: 'rocket' },
-      { id: 'analytics', label: 'Game analytics', icon: 'bar-chart-3' },
-    ]
-  },
+  { group: 'Catalog',      items: [
+    { id: 'sources',    label: 'Sources',            icon: 'database' },
+    { id: 'mapping',    label: 'Mapping Studio',     icon: 'git-branch', primary: true },
+    { id: 'master',     label: 'Master Tables',      icon: 'table-2' },
+    { id: 'metrics',    label: 'Metrics Catalog',    icon: 'layers' },
+    { id: 'freshness',  label: 'Freshness & SLAs',   icon: 'timer' },
+    { id: 'explorer',   label: 'Raw data explorer',  icon: 'file-search' },
+  ]},
+  { group: 'Intelligence', items: [
+    { id: 'features',   label: 'Feature builder',    icon: 'function-square' },
+    { id: 'models',     label: 'Propensity models',  icon: 'sparkles' },
+  ]},
+  { group: 'Activation',   items: [
+    { id: 'builder',    label: 'Segment builder',    icon: 'share-2' },
+    { id: 'monitor',    label: 'Live segment monitor', icon: 'radio', live: true },
+    { id: 'campaigns',  label: 'Campaigns',          icon: 'rocket' },
+    { id: 'analytics',  label: 'Game analytics',     icon: 'bar-chart-3' },
+  ]},
 ];
 
 const ROLES = [
-  {
-    id: 'liveops', label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
-    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder'])
-  },
-  {
-    id: 'data', label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'features',
-    pages: new Set(['connectors', 'explorer', 'features', 'models', 'builder'])
-  },
-  {
-    id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
-    pages: new Set(['monitor', 'campaigns', 'analytics'])
-  },
-  {
-    id: 'all', label: 'All access', color: '#0a0a0a', initial: 'AD', defaultPage: 'builder',
-    pages: null
-  },
+  { id: 'liveops',  label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
+    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'master']) },
+  { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'mapping',
+    pages: new Set(['sources', 'mapping', 'master', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
+  { id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
+    pages: new Set(['monitor', 'campaigns', 'analytics', 'metrics']) },
+  { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'mapping',
+    pages: null },
 ];
+
+// ─── Brand mark (Bedrock appmark PNG) ───────────────────────────
+// Single source of truth for the app logo. Swap the PNG path once, it
+// updates everywhere (left rail, top tabs, stepper).
+function BrandMark({ size = 32, style }) {
+  return (
+    <img
+      src="/assets/logo/appmark-dark.png"
+      alt="Bedrock"
+      width={size}
+      height={size}
+      style={{ display: 'block', width: size, height: size, borderRadius: 8, flexShrink: 0, ...style }}
+    />
+  );
+}
 
 // ─── Tweaks panel ───────────────────────────────────────────────
 function TweaksPanel({ tweaks, setTweak, visible, onClose }) {
@@ -131,6 +138,13 @@ function TweaksPanel({ tweaks, setTweak, visible, onClose }) {
           </div>
           <Switch checked={tweaks.darkMode} onChange={v => setTweak('darkMode', v)} />
         </div>
+
+        <a href="variations.html" style={{
+          display: 'block', padding: '10px 12px', borderRadius: 8, background: T.n950, color: '#fff',
+          fontSize: 12, fontWeight: 500, textDecoration: 'none', textAlign: 'center',
+        }}>
+          Open variations canvas →
+        </a>
       </div>
     </div>
   );
@@ -146,8 +160,7 @@ function RoleSwitcher({ role, onChange }) {
         display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px',
         borderRadius: 8, cursor: 'pointer', background: T.n100, border: `1px solid ${T.n200}`,
       }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: 7, background: r.color, color: '#fff',
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: r.color, color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', fontFamily: T.fSans,
         }}>{r.initial}</div>
@@ -170,9 +183,8 @@ function RoleSwitcher({ role, onChange }) {
                 display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
                 background: rr.id === role ? T.brandSoft : 'transparent',
               }} onMouseEnter={e => { if (rr.id !== role) e.currentTarget.style.background = T.n50; }}
-                onMouseLeave={e => { if (rr.id !== role) e.currentTarget.style.background = 'transparent'; }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: 6, background: rr.color, color: '#fff',
+                 onMouseLeave={e => { if (rr.id !== role) e.currentTarget.style.background = 'transparent'; }}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: rr.color, color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 10, fontWeight: 700,
                 }}>{rr.initial}</div>
@@ -203,14 +215,10 @@ function LeftRail({ page, setPage, role, setRole }) {
     }}>
       <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${T.n200}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, background: T.n950,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-            fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-          }}>v<span style={{ color: T.brand }}>G</span></div>
+          <BrandMark size={32} />
           <div>
-            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950, lineHeight: 1.1, letterSpacing: '-0.01em' }}>LiveOps Engine</div>
-            <div style={{ fontFamily: T.fSans, fontSize: 10, color: T.n500, marginTop: 2 }}>GDS · VNGGames</div>
+            <div style={{ fontFamily: T.fDisp, fontSize: 20, fontWeight: 400, color: T.n950, lineHeight: 1, letterSpacing: '0.02em', textTransform: 'uppercase' }}>Bedrock</div>
+            <div style={{ fontFamily: T.fSans, fontSize: 10, color: T.n500, marginTop: 2 }}>The foundation LiveOps builds on</div>
           </div>
         </div>
       </div>
@@ -241,7 +249,7 @@ function LeftRail({ page, setPage, role, setRole }) {
                     marginBottom: 1,
                     position: 'relative',
                   }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.n50; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
+                     onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
                     {active && <span style={{ position: 'absolute', left: -8, top: 8, bottom: 8, width: 3, borderRadius: 2, background: T.brand }} />}
                     <Icon name={item.icon} size={15} color={active ? T.brand : T.n500} />
                     <span style={{ flex: 1 }}>{item.label}</span>
@@ -262,7 +270,7 @@ function LeftRail({ page, setPage, role, setRole }) {
         <Avatar name={r.label} size={28} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: T.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Khoi Tran</div>
-          <div style={{ fontSize: 10, color: T.n500 }}>khoi.tran@vng.com.vn</div>
+          <div style={{ fontSize: 10, color: T.n500 }}>khoitn@vng.com.vn</div>
         </div>
         <Button variant="ghost" size="icon-sm"><Icon name="settings" size={13} /></Button>
       </div>
@@ -279,12 +287,8 @@ function TopTabs({ page, setPage, role, setRole }) {
   return (
     <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8, background: T.n950,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-        }}>v<span style={{ color: T.brand }}>G</span></div>
-        <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine</div>
+        <BrandMark size={32} />
+        <div style={{ fontFamily: T.fDisp, fontSize: 18, fontWeight: 400, color: T.n950, letterSpacing: '0.02em', textTransform: 'uppercase' }}>Bedrock</div>
         <div style={{ flex: 1 }} />
         <Input size="sm" leftIcon="search" placeholder="Search segments, features…" style={{ width: 280 }} />
         <Button variant="ghost" size="icon-sm"><Icon name="bell" size={14} /></Button>
@@ -322,12 +326,8 @@ function Stepper({ page, setPage, role, setRole }) {
   return (
     <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8, background: T.n950,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-        }}>v<span style={{ color: T.brand }}>G</span></div>
-        <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine · Workflow</div>
+        <BrandMark size={32} />
+        <div style={{ fontFamily: T.fDisp, fontSize: 18, fontWeight: 400, color: T.n950, letterSpacing: '0.02em', textTransform: 'uppercase' }}>Bedrock · Workflow</div>
         <div style={{ flex: 1 }} />
         <RoleSwitcher role={role} onChange={setRole} />
       </div>
@@ -384,8 +384,8 @@ function SegmentBuilderSidebar() {
           <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { f: 'purchase_amount_30d', op: '≥', v: '50 USD', matches: '68.2K', icon: 'filter' },
-              { f: 'sessions_last_7d', op: '≥', v: '3 sessions', matches: '942K', icon: 'filter' },
-              { f: 'churn_risk_score', op: '≥', v: '0.6 (propensity v4)', matches: '184K', icon: 'sparkles', ml: true },
+              { f: 'sessions_last_7d',    op: '≥', v: '3 sessions', matches: '942K', icon: 'filter' },
+              { f: 'churn_risk_score',    op: '≥', v: '0.6 (propensity v4)', matches: '184K', icon: 'sparkles', ml: true },
             ].map((f, i) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 10, padding: 12,
@@ -399,7 +399,7 @@ function SegmentBuilderSidebar() {
                   <div style={{ fontFamily: T.fMono, fontSize: 12, fontWeight: 600, color: T.n900 }}>{f.f}</div>
                   <div style={{ fontFamily: T.fSans, fontSize: 11, color: T.n500, marginTop: 2 }}>{f.op} {f.v} · matches {f.matches}</div>
                 </div>
-                <Select size="sm" value="and" onChange={() => { }} options={[{ value: 'and', label: 'AND' }, { value: 'or', label: 'OR' }]} />
+                <Select size="sm" value="and" onChange={() => {}} options={[{ value: 'and', label: 'AND' }, { value: 'or', label: 'OR' }]} />
                 <Button variant="ghost" size="icon-sm"><Icon name="trash-2" size={13} /></Button>
               </div>
             ))}
@@ -415,7 +415,7 @@ function SegmentBuilderSidebar() {
           <Card padding={18}>
             <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900, marginBottom: 10 }}>Generated SQL</div>
             <pre style={{ margin: 0, fontFamily: T.fMono, fontSize: 10.5, lineHeight: 1.5, color: T.n600, whiteSpace: 'pre-wrap' }}>
-              {`SELECT user_id
+{`SELECT user_id
 FROM features.player_daily
 WHERE game = 'PTG'
   AND purchase_amount_30d >= 50
@@ -434,10 +434,10 @@ WHERE game = 'PTG'
 function SegmentBuilderWizard() {
   const [step, setStep] = React.useState(2);
   const steps = [
-    { id: 0, label: 'Pick population', icon: 'users' },
-    { id: 1, label: 'Add filters', icon: 'filter' },
-    { id: 2, label: 'Layer ML', icon: 'sparkles' },
-    { id: 3, label: 'Preview & activate', icon: 'rocket' },
+    { id: 0, label: 'Pick population',   icon: 'users' },
+    { id: 1, label: 'Add filters',       icon: 'filter' },
+    { id: 2, label: 'Layer ML',          icon: 'sparkles' },
+    { id: 3, label: 'Preview & activate',icon: 'rocket' },
   ];
   useLucide(step);
   return (
@@ -484,7 +484,7 @@ function SegmentBuilderWizard() {
             {[
               { name: 'PTG Churn v4', target: 'Will churn in 14 days', auc: 0.872, selected: true },
               { name: 'PTG Propensity to Pay v7', target: 'Will spend $5+ in 7d', auc: 0.814, selected: false },
-              { name: 'Skip — rule-based only', target: 'Use only the filters above', auc: null, selected: false },
+              { name: 'Skip — rule-based only', target: 'Use only the filters above',  auc: null, selected: false },
             ].map((m, i) => (
               <div key={i} style={{
                 padding: 14, borderRadius: 10, cursor: 'pointer',
@@ -527,7 +527,7 @@ function SegmentBuilderWizard() {
                   <span>0.0 low risk</span><span>0.6 ← selected</span><span>1.0 high risk</span>
                 </div>
               </div>
-              <Input size="sm" value="0.6" onChange={() => { }} style={{ width: 72 }} />
+              <Input size="sm" value="0.6" onChange={() => {}} style={{ width: 72 }} />
             </div>
           </div>
 
@@ -568,7 +568,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('lo_tweaks') || '{}'); } catch { return {}; }
   };
   const [tweaks, setTweaks] = React.useState(() => ({ ...TWEAKS, ...loadLocalTweaks() }));
-  const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'builder');
+  const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'mapping');
   const [role, setRoleRaw] = React.useState(() => localStorage.getItem('lo_role') || 'liveops');
   const setRole = React.useCallback((newRole) => {
     setRoleRaw(newRole);
@@ -587,18 +587,24 @@ export default function App() {
 
   const renderPage = () => {
     switch (page) {
-      case 'connectors': return <DataConnectors />;
-      case 'explorer': return <RawExplorer />;
-      case 'features': return <FeatureBuilder />;
-      case 'models': return <PropensityModels />;
+      case 'sources':    return <Sources />;
+      case 'mapping':    return <MappingStudio />;
+      case 'master':     return <MasterTables />;
+      case 'metrics':    return <MetricsCatalog />;
+      case 'freshness':  return <FreshnessSLAs />;
+      case 'explorer':   return <RawExplorer />;
+      case 'features':   return <FeatureBuilder />;
+      case 'models':     return <PropensityModels />;
       case 'builder':
         if (tweaks.segmentBuilderLayout === 'sidebar') return <SegmentBuilderSidebar />;
-        if (tweaks.segmentBuilderLayout === 'wizard') return <SegmentBuilderWizard />;
+        if (tweaks.segmentBuilderLayout === 'wizard')  return <SegmentBuilderWizard />;
         return <SegmentBuilder />;
-      case 'monitor': return <LiveMonitor chartType={tweaks.chartType} />;
-      case 'campaigns': return <Campaigns />;
-      case 'analytics': return <GameAnalytics />;
-      default: return <SegmentBuilder />;
+      case 'monitor':    return <LiveMonitor chartType={tweaks.chartType} />;
+      case 'campaigns':  return <Campaigns />;
+      case 'analytics':  return <GameAnalytics />;
+      // Legacy page ID kept for old localStorage values — DataConnectors still available.
+      case 'connectors': return <DataConnectors />;
+      default:           return <MappingStudio />;
     }
   };
 
@@ -615,9 +621,9 @@ export default function App() {
           {tweaks.navStyle === 'left-rail' && (
             <div style={{ padding: '10px 24px', background: '#fff', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fSans, fontSize: 12, color: T.n500 }}>
-                <span>LiveOps Engine</span>
+                <span>Bedrock</span>
                 <Icon name="chevron-right" size={11} />
-                <span style={{ color: T.n900, fontWeight: 500, textTransform: 'capitalize' }}>{NAV.flatMap(s => s.items).find(i => i.id === page)?.label}</span>
+                <span style={{ color: T.n900, fontWeight: 500, textTransform: 'capitalize' }}>{NAV.flatMap(s=>s.items).find(i=>i.id===page)?.label}</span>
               </div>
               <div style={{ flex: 1 }} />
               <Input size="sm" leftIcon="search" placeholder="Search segments, features, tables…" style={{ width: 300 }} />

@@ -4,9 +4,38 @@ This file provides guidance to OpenCode when working with code in this repositor
 
 ## Project Overview
 
-**Name:** claudekit-engineer
-**Type:** Node.js/TypeScript
-**Description:** A comprehensive boilerplate template for building professional software projects with **CLI Coding Agents** (**Claude Code** and **Open Code**). This template provides a complete development environment with AI-powered agent orchestration, automated workflows, and intelligent project management.
+**Name:** Bedrock (VNGGames LiveOps prototype)
+**Stack:** Vite 5 · React 18 · Recharts · Lucide (CDN). JavaScript (no TypeScript),
+inline styles driven by `src/theme.jsx` tokens, no CSS framework.
+**Description:** Working prototype of "Bedrock — the foundation LiveOps builds on".
+End-to-end pipeline UI: raw sources → mapping → master tables → metrics/SLAs →
+features/models → segments → campaigns → analytics. Mock data spans three
+VNGGames titles: PTG (Play Together), CFM (CrossFire Mobile), TFB (Total Football).
+Deployed via Dokploy (Nixpacks) from GitLab.
+
+**Information architecture (never casually break this):**
+- **Catalog** — Sources, Mapping Studio, Master Tables, Metrics Catalog, Freshness & SLAs, Raw explorer
+- **Intelligence** — Feature builder, Propensity models
+- **Activation** — Segment builder, Live monitor, Campaigns, Game analytics
+
+## Design System (MANDATORY)
+
+Before touching any UI code:
+
+1. Read `docs/design-system.md` for the full written spec.
+2. Reuse primitives from `src/theme.jsx` (`T.*` tokens + `Button`, `Card`, `Icon`,
+   `Input`, `Select`, `Switch`, `Tabs`, `Avatar`, `Kpi`, `SectionHeader`, `Badge`,
+   `Sparkline`). Missing something? Extend `theme.jsx` — do not duplicate inline.
+3. Colors / fonts / radii come from `T.*` or `colors_and_type.css` only. No new
+   hex values. No ad-hoc scales.
+4. Icons: `<Icon name="..." />` only — inline Lucide SVG. Never emit `<i data-lucide>`,
+   never add a second icon library.
+5. Fonts: `T.fDisp` (League Gothic, self-hosted in `public/fonts/`) for headlines,
+   `T.fSans` (Inter) for UI, `T.fMono` (Geist Mono) for code/SQL/IDs.
+6. Brand mark: `<BrandMark>` in `App.jsx` loads `public/assets/logo/appmark-dark.png`.
+7. Mock data extends `src/data.jsx` + `src/bedrockData.jsx` — keep PTG/CFM/TFB only.
+8. Design references (read-only): `LiveOps Engine.html` (latest full prototype),
+   `variations.html` + `design-canvas.jsx` (Claude's design review board).
 
 ## Role & Responsibilities
 
