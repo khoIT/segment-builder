@@ -261,7 +261,7 @@ function LeftRail({ page, setPage, role, setRole }) {
       <div style={{ padding: 12, borderTop: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
         <Avatar name={r.label} size={28} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Linh Pham</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: T.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Khoi Tran</div>
           <div style={{ fontSize: 10, color: T.n500 }}>khoi.tran@vng.com.vn</div>
         </div>
         <Button variant="ghost" size="icon-sm"><Icon name="settings" size={13} /></Button>
