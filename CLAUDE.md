@@ -75,6 +75,38 @@ This ensures packages installed by `install.sh` (google-genai, pypdf, etc.) are 
 - After modularization, continue with main task
 - When not to modularize: Markdown files, plain text files, bash scripts, configuration files, environment variables files, etc.
 
+## Design Reference (Claude design artifacts)
+
+This is a working prototype whose visual language originates from Claude-generated
+design artifacts. **Before building any new feature, page, or component, consult
+these files as the canonical design source** — the aesthetic, tokens, spacing,
+typographic scale, and component vocabulary were all decided there.
+
+| File | Role |
+|------|------|
+| `src/theme.jsx` | **Source of truth** — design tokens (`T`), primitive components (`Button`, `Badge`, `Card`, `Input`, `Select`, `Switch`, `Tabs`, `Kpi`, `SectionHeader`, `Icon`, `Sparkline`). Reuse these. Do not re-invent. |
+| `colors_and_type.css` | Global color + typography tokens (Tailwind v4 neutrals + VNGGames orange accent). Companion to `theme.jsx`. |
+| `variations.html` | Design review board rendering multiple layout/component variations via `design-canvas.jsx`. Open in a browser to see the options Claude explored. |
+| `design-canvas.jsx` | Figma-ish canvas wrapper (Sections / Artboards / PostIts) used by `variations.html`. Don't edit unless you're restructuring the design board itself. |
+| `LiveOps Engine.html` | Legacy standalone full-app export from an earlier Claude session. **Reference only** — `src/` is canonical. |
+
+**Rules when building features:**
+
+1. **Reuse primitives from `src/theme.jsx` first.** Do not hand-roll buttons, cards,
+   badges, or icons. If a primitive is missing, extend `theme.jsx` rather than
+   duplicating styles inline.
+2. **Respect the token system.** Colors, radii, font families, and font sizes
+   must come from `T.*` or `colors_and_type.css`. No new hard-coded hex values.
+3. **Icons go through `<Icon name="..." />`** which renders inline Lucide SVG.
+   Don't add new icon libraries or emit `<i data-lucide>` stubs.
+4. **Layout conventions** (match existing pages — `SegmentBuilder.jsx`,
+   `LiveMonitor.jsx`, `Screens.jsx`): `SectionHeader` → grid/flex content →
+   `Card` containers. Padding ~20–24px, 16px gaps, 8–12px radii.
+5. **Skim `variations.html` first** when a feature has layout/interaction
+   options to consider. Claude may have already explored them.
+6. **Never treat `Segment Builder.zip` / `release-manifest.json` as design
+   sources** — they're throwaway export artifacts (gitignored).
+
 ## Documentation Management
 
 We keep all important docs in `./docs` folder and keep updating them, structure like below:
