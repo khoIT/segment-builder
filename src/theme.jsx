@@ -1,6 +1,6 @@
 import React from 'react';
 // Shared design tokens + primitive components for the LiveOps prototype
-// Derived from VNGGames Player Hub design system (shadcn + Tailwind v4 neutrals).
+// Derived from VNGGames GDS design system (shadcn + Tailwind v4 neutrals).
 
 const T = {
   // neutral workhorse
@@ -25,20 +25,50 @@ const CHART = ['#f05a22', '#3f8dff', '#059669', '#f59e0b', '#a855f7', '#ef4444',
 
 const cx = (...a) => a.filter(Boolean).join(' ');
 
-// ─── Icon (Lucide via CDN, rendered as <i data-lucide="name">) ───
-const Icon = ({ name, size = 16, color, style, ...rest }) => (
-  <i data-lucide={name} style={{
-    width: size, height: size, color: color || 'currentColor',
-    display: 'inline-flex', flexShrink: 0, strokeWidth: 1.75, ...style,
-  }} {...rest} />
-);
-
-// refresh lucide icons after render
-function useLucide(dep) {
-  React.useEffect(() => {
-    if (window.lucide) window.lucide.createIcons();
-  }, [dep]);
+// ─── Icon (Lucide via CDN, rendered as inline React SVG) ───
+// Previous implementation emitted <i data-lucide="name"> and relied on
+// window.lucide.createIcons() to scan the entire document on every render —
+// an O(DOM) DOM mutation that made tab / role switches feel laggy.
+// Now we render SVGs inline using lucide's icon data exposed on window.lucide
+// (PascalCase keys, each value is an array of [tagName, attrs] child tuples).
+const _iconCache = new Map();
+function _resolveIcon(name) {
+  if (_iconCache.has(name)) return _iconCache.get(name);
+  const L = typeof window !== 'undefined' ? window.lucide : null;
+  if (!L) return null; // CDN not loaded yet — render blank, caller can retry
+  const pascal = name.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+  const data = L.icons?.[pascal] || L[pascal] || null;
+  if (data) _iconCache.set(name, data);
+  return data;
 }
+
+const Icon = React.memo(({ name, size = 16, color, style, strokeWidth = 1.75, ...rest }) => {
+  const children = _resolveIcon(name);
+  const rootStyle = {
+    width: size, height: size, display: 'inline-block', flexShrink: 0,
+    color: color || 'currentColor', ...style,
+  };
+  if (!children) {
+    // Icon data unavailable (CDN miss / unknown name) — empty placeholder preserves layout.
+    return <span style={rootStyle} {...rest} />;
+  }
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor"
+      strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
+      style={rootStyle}
+      {...rest}
+    >
+      {children.map(([tag, attrs], i) => React.createElement(tag, { key: i, ...attrs }))}
+    </svg>
+  );
+});
+
+// Kept for backward compatibility with existing call sites — no longer needed
+// now that <Icon> renders SVG inline, so this is a harmless no-op.
+function useLucide(_dep) {}
 
 // ─── Button ───
 const Button = ({ variant = 'primary', size = 'default', children, leftIcon, rightIcon, onClick, disabled, active, style, ...rest }) => {

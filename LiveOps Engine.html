@@ -1,716 +1,794 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=1440" />
-<title>LiveOps Engine — VNGGames Player Hub</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1440" />
+  <title>LiveOps Engine — VNGGames GDS</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=League+Gothic&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="colors_and_type.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=League+Gothic&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="colors_and_type.css">
 
-<style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; font-family: "Inter", sans-serif; color: #0a0a0a; background: #fafafa; }
-  #root { height: 100vh; overflow: hidden; }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  /* live pulse */
-  @keyframes pulse-dot {
-    0%,100% { box-shadow: 0 0 0 0 currentColor; }
-    50%     { box-shadow: 0 0 0 4px rgba(22,101,52,0); }
-  }
-  /* subtle shimmer for "live" data */
-  @keyframes live-pulse {
-    0%,100% { opacity: 1; }
-    50%     { opacity: 0.65; }
-  }
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: "Inter", sans-serif;
+      color: #0a0a0a;
+      background: #fafafa;
+    }
 
-  /* hide scrollbars for the sidebar but allow scroll */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); background-clip: padding-box; border: 2px solid transparent; }
+    #root {
+      height: 100vh;
+      overflow: hidden;
+    }
 
-  /* selection */
-  ::selection { background: rgba(240, 90, 34, 0.2); }
-</style>
+    /* live pulse */
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 currentColor;
+      }
+
+      50% {
+        box-shadow: 0 0 0 4px rgba(22, 101, 52, 0);
+      }
+    }
+
+    /* subtle shimmer for "live" data */
+    @keyframes live-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.65;
+      }
+    }
+
+    /* hide scrollbars for the sidebar but allow scroll */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.12);
+      border-radius: 10px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.22);
+      background-clip: padding-box;
+      border: 2px solid transparent;
+    }
+
+    /* selection */
+    ::selection {
+      background: rgba(240, 90, 34, 0.2);
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="root"></div>
+  <div id="root"></div>
 
-<!-- React + Babel (pinned) -->
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+    crossorigin="anonymous"></script>
 
-<!-- Recharts -->
-<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
-<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <!-- Recharts -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 
-<!-- Lucide -->
-<script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<!-- Components (order matters: theme → data → feature screens → app shell) -->
-<script type="text/babel" src="src/theme.jsx" data-presets="react"></script>
-<script type="text/babel" src="src/data.jsx" data-presets="react"></script>
-<script type="text/babel" src="src/SegmentBuilder.jsx" data-presets="react"></script>
-<script type="text/babel" src="src/LiveMonitor.jsx" data-presets="react"></script>
-<script type="text/babel" src="src/Screens.jsx" data-presets="react"></script>
+  <!-- Components (order matters: theme → data → feature screens → app shell) -->
+  <script type="text/babel" src="src/theme.jsx" data-presets="react"></script>
+  <script type="text/babel" src="src/data.jsx" data-presets="react"></script>
+  <script type="text/babel" src="src/SegmentBuilder.jsx" data-presets="react"></script>
+  <script type="text/babel" src="src/LiveMonitor.jsx" data-presets="react"></script>
+  <script type="text/babel" src="src/Screens.jsx" data-presets="react"></script>
 
-<!-- App shell (nav + role switcher + tweak panel + page routing) -->
-<script type="text/babel" data-presets="react">
-/* global React, ReactDOM, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, GAMES, SegmentBuilder, LiveMonitor, DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics */
+  <!-- App shell (nav + role switcher + tweak panel + page routing) -->
+  <script type="text/babel" data-presets="react">
+    /* global React, ReactDOM, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, GAMES, SegmentBuilder, LiveMonitor, DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics */
 
-// ═══════════════════════════════════════════════════════════════════════
-// TWEAKS — tweakable defaults
-// ═══════════════════════════════════════════════════════════════════════
-const TWEAKS = /*EDITMODE-BEGIN*/{
-  "navStyle": "left-rail",
-  "chartType": "area",
-  "segmentBuilderLayout": "canvas",
-  "darkMode": false,
-  "accentColor": "#f05a22"
-}/*EDITMODE-END*/;
+    // ═══════════════════════════════════════════════════════════════════════
+    // TWEAKS — tweakable defaults
+    // ═══════════════════════════════════════════════════════════════════════
+    const TWEAKS = /*EDITMODE-BEGIN*/{
+      "navStyle": "left-rail",
+      "chartType": "area",
+      "segmentBuilderLayout": "canvas",
+      "darkMode": false,
+      "accentColor": "#f05a22"
+    }/*EDITMODE-END*/;
 
-const NAV = [
-  { group: 'Data',         items: [
-    { id: 'connectors', label: 'Data connectors', icon: 'database' },
-    { id: 'explorer',   label: 'Raw data explorer', icon: 'table-2' },
-  ]},
-  { group: 'Modeling',     items: [
-    { id: 'features',   label: 'Feature builder', icon: 'function-square' },
-    { id: 'models',     label: 'Propensity models', icon: 'sparkles' },
-  ]},
-  { group: 'Segments',     items: [
-    { id: 'builder',    label: 'Segment builder', icon: 'share-2', primary: true },
-    { id: 'monitor',    label: 'Live segment monitor', icon: 'radio', live: true },
-  ]},
-  { group: 'Activation',   items: [
-    { id: 'campaigns',  label: 'Campaigns', icon: 'rocket' },
-    { id: 'analytics',  label: 'Game analytics', icon: 'bar-chart-3' },
-  ]},
-];
+    const NAV = [
+      {
+        group: 'Data', items: [
+          { id: 'connectors', label: 'Data connectors', icon: 'database' },
+          { id: 'explorer', label: 'Raw data explorer', icon: 'table-2' },
+        ]
+      },
+      {
+        group: 'Modeling', items: [
+          { id: 'features', label: 'Feature builder', icon: 'function-square' },
+          { id: 'models', label: 'Propensity models', icon: 'sparkles' },
+        ]
+      },
+      {
+        group: 'Segments', items: [
+          { id: 'builder', label: 'Segment builder', icon: 'share-2', primary: true },
+          { id: 'monitor', label: 'Live segment monitor', icon: 'radio', live: true },
+        ]
+      },
+      {
+        group: 'Activation', items: [
+          { id: 'campaigns', label: 'Campaigns', icon: 'rocket' },
+          { id: 'analytics', label: 'Game analytics', icon: 'bar-chart-3' },
+        ]
+      },
+    ];
 
-const ROLES = [
-  { id: 'liveops',  label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
-    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder']) },
-  { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'features',
-    pages: new Set(['connectors', 'explorer', 'features', 'models', 'builder']) },
-  { id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
-    pages: new Set(['monitor', 'campaigns', 'analytics']) },
-  { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'builder',
-    pages: null },
-];
+    const ROLES = [
+      {
+        id: 'liveops', label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
+        pages: new Set(['monitor', 'campaigns', 'analytics', 'builder'])
+      },
+      {
+        id: 'data', label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'features',
+        pages: new Set(['connectors', 'explorer', 'features', 'models', 'builder'])
+      },
+      {
+        id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
+        pages: new Set(['monitor', 'campaigns', 'analytics'])
+      },
+      {
+        id: 'all', label: 'All access', color: '#0a0a0a', initial: 'AD', defaultPage: 'builder',
+        pages: null
+      },
+    ];
 
-// ─── Tweaks panel ───────────────────────────────────────────────
-function TweaksPanel({ tweaks, setTweak, visible, onClose }) {
-  if (!visible) return null;
-  return (
-    <div style={{
-      position: 'fixed', bottom: 20, right: 20, width: 300, zIndex: 1000,
-      background: '#fff', borderRadius: 12, border: `1px solid ${T.n200}`,
-      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25), 0 8px 16px -4px rgba(0,0,0,0.1)',
-      fontFamily: T.fSans,
-    }}>
-      <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon name="sliders-horizontal" size={14} />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Tweaks</span>
-        </div>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}><Icon name="x" size={14} /></Button>
-      </div>
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Navigation</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
-            {[{ v: 'left-rail', l: 'Left rail' }, { v: 'top-tabs', l: 'Top tabs' }, { v: 'stepper', l: 'Stepper' }].map(o => (
-              <div key={o.v} onClick={() => setTweak('navStyle', o.v)} style={{
-                padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
-                fontSize: 11, fontWeight: 500,
-                border: `1px solid ${tweaks.navStyle === o.v ? T.brand : T.n200}`,
-                background: tweaks.navStyle === o.v ? T.brandSoft : '#fff',
-                color: tweaks.navStyle === o.v ? T.brand : T.n700,
-              }}>{o.l}</div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Segment builder layout</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
-            {[{ v: 'canvas', l: 'Canvas' }, { v: 'sidebar', l: 'Sidebar' }, { v: 'wizard', l: 'Wizard' }].map(o => (
-              <div key={o.v} onClick={() => setTweak('segmentBuilderLayout', o.v)} style={{
-                padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
-                fontSize: 11, fontWeight: 500,
-                border: `1px solid ${tweaks.segmentBuilderLayout === o.v ? T.brand : T.n200}`,
-                background: tweaks.segmentBuilderLayout === o.v ? T.brandSoft : '#fff',
-                color: tweaks.segmentBuilderLayout === o.v ? T.brand : T.n700,
-              }}>{o.l}</div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Live monitor chart</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-            {[{ v: 'area', l: 'Area' }, { v: 'line', l: 'Line' }].map(o => (
-              <div key={o.v} onClick={() => setTweak('chartType', o.v)} style={{
-                padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
-                fontSize: 11, fontWeight: 500,
-                border: `1px solid ${tweaks.chartType === o.v ? T.brand : T.n200}`,
-                background: tweaks.chartType === o.v ? T.brandSoft : '#fff',
-                color: tweaks.chartType === o.v ? T.brand : T.n700,
-              }}>{o.l}</div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 12, color: T.n900, fontWeight: 500 }}>Dark mode</div>
-            <div style={{ fontSize: 11, color: T.n500 }}>Invert the neutral palette</div>
-          </div>
-          <Switch checked={tweaks.darkMode} onChange={v => setTweak('darkMode', v)} />
-        </div>
-
-        <a href="variations.html" style={{
-          display: 'block', padding: '10px 12px', borderRadius: 8, background: T.n950, color: '#fff',
-          fontSize: 12, fontWeight: 500, textDecoration: 'none', textAlign: 'center',
+    // ─── Tweaks panel ───────────────────────────────────────────────
+    function TweaksPanel({ tweaks, setTweak, visible, onClose }) {
+      if (!visible) return null;
+      return (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, width: 300, zIndex: 1000,
+          background: '#fff', borderRadius: 12, border: `1px solid ${T.n200}`,
+          boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25), 0 8px 16px -4px rgba(0,0,0,0.1)',
+          fontFamily: T.fSans,
         }}>
-          Open variations canvas →
-        </a>
-      </div>
-    </div>
-  );
-}
-
-// ─── Role Switcher ─────────────────────────────────────────────
-function RoleSwitcher({ role, onChange }) {
-  const [open, setOpen] = React.useState(false);
-  const r = ROLES.find(x => x.id === role);
-  return (
-    <div style={{ position: 'relative' }}>
-      <div onClick={() => setOpen(o => !o)} style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px',
-        borderRadius: 8, cursor: 'pointer', background: T.n100, border: `1px solid ${T.n200}`,
-      }}>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: r.color, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', fontFamily: T.fSans,
-        }}>{r.initial}</div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: T.n500, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>Viewing as</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.n900, lineHeight: 1.2 }}>{r.label}</div>
-        </div>
-        <Icon name="chevrons-up-down" size={13} color={T.n500} />
-      </div>
-      {open && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 51,
-            background: '#fff', borderRadius: 10, border: `1px solid ${T.n200}`,
-            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25)', padding: 4, minWidth: 240,
-          }}>
-            {ROLES.map(rr => (
-              <div key={rr.id} onClick={() => { onChange(rr.id); setOpen(false); }} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-                background: rr.id === role ? T.brandSoft : 'transparent',
-              }} onMouseEnter={e => { if (rr.id !== role) e.currentTarget.style.background = T.n50; }}
-                 onMouseLeave={e => { if (rr.id !== role) e.currentTarget.style.background = 'transparent'; }}>
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: rr.color, color: '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700,
-                }}>{rr.initial}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: T.n900 }}>{rr.label}</div>
-                  <div style={{ fontSize: 10, color: T.n500 }}>
-                    {rr.pages ? `${rr.pages.size} pages` : 'All pages'}
-                  </div>
-                </div>
-                {rr.id === role && <Icon name="check" size={13} color={T.brand} />}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─── Left Rail ─────────────────────────────────────────────────
-function LeftRail({ page, setPage, role, setRole }) {
-  const r = ROLES.find(x => x.id === role);
-  useLucide(page);
-  return (
-    <div style={{
-      width: 248, background: '#fff', borderRight: `1px solid ${T.n200}`,
-      display: 'flex', flexDirection: 'column', flexShrink: 0,
-    }}>
-      {/* brand */}
-      <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${T.n200}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, background: T.n950,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-            fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-          }}>v<span style={{ color: T.brand }}>G</span></div>
-          <div>
-            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950, lineHeight: 1.1, letterSpacing: '-0.01em' }}>LiveOps Engine</div>
-            <div style={{ fontFamily: T.fSans, fontSize: 10, color: T.n500, marginTop: 2 }}>Player Hub · VNGGames</div>
-          </div>
-        </div>
-      </div>
-
-      {/* role */}
-      <div style={{ padding: 12, borderBottom: `1px solid ${T.n200}` }}>
-        <RoleSwitcher role={role} onChange={setRole} />
-      </div>
-
-      {/* nav */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '12px 8px' }}>
-        {NAV.map(sec => {
-          const visible = sec.items.filter(i => !r.pages || r.pages.has(i.id));
-          if (!visible.length) return null;
-          return (
-            <div key={sec.group} style={{ marginBottom: 16 }}>
-              <div style={{
-                fontFamily: T.fSans, fontSize: 10, fontWeight: 600, color: T.n400,
-                padding: '4px 12px 6px', letterSpacing: '0.08em', textTransform: 'uppercase',
-              }}>{sec.group}</div>
-              {visible.map(item => {
-                const active = page === item.id;
-                return (
-                  <div key={item.id} onClick={() => setPage(item.id)} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 12px', borderRadius: 7, cursor: 'pointer',
-                    fontFamily: T.fSans, fontSize: 13, fontWeight: 500,
-                    color: active ? T.n950 : T.n700,
-                    background: active ? T.n100 : 'transparent',
-                    marginBottom: 1,
-                    position: 'relative',
-                  }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.n50; }}
-                     onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
-                    {active && <span style={{ position: 'absolute', left: -8, top: 8, bottom: 8, width: 3, borderRadius: 2, background: T.brand }} />}
-                    <Icon name={item.icon} size={15} color={active ? T.brand : T.n500} />
-                    <span style={{ flex: 1 }}>{item.label}</span>
-                    {item.live && <span style={{
-                      width: 6, height: 6, borderRadius: 9999, background: '#22c55e',
-                      boxShadow: '0 0 0 0 rgba(34,197,94,0.5)', animation: 'pulse-dot 1.6s infinite',
-                    }} />}
-                    {item.primary && !active && <Badge variant="brandSoft" style={{ padding: '1px 6px', fontSize: 9 }}>hot</Badge>}
-                  </div>
-                );
-              })}
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="sliders-horizontal" size={14} />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Tweaks</span>
             </div>
-          );
-        })}
-      </div>
+            <Button variant="ghost" size="icon-sm" onClick={onClose}><Icon name="x" size={14} /></Button>
+          </div>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Navigation</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
+                {[{ v: 'left-rail', l: 'Left rail' }, { v: 'top-tabs', l: 'Top tabs' }, { v: 'stepper', l: 'Stepper' }].map(o => (
+                  <div key={o.v} onClick={() => setTweak('navStyle', o.v)} style={{
+                    padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
+                    fontSize: 11, fontWeight: 500,
+                    border: `1px solid ${tweaks.navStyle === o.v ? T.brand : T.n200}`,
+                    background: tweaks.navStyle === o.v ? T.brandSoft : '#fff',
+                    color: tweaks.navStyle === o.v ? T.brand : T.n700,
+                  }}>{o.l}</div>
+                ))}
+              </div>
+            </div>
 
-      {/* footer */}
-      <div style={{ padding: 12, borderTop: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Avatar name={r.label} size={28} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Linh Pham</div>
-          <div style={{ fontSize: 10, color: T.n500 }}>linh.pham@vng.com.vn</div>
-        </div>
-        <Button variant="ghost" size="icon-sm"><Icon name="settings" size={13} /></Button>
-      </div>
-    </div>
-  );
-}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Segment builder layout</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
+                {[{ v: 'canvas', l: 'Canvas' }, { v: 'sidebar', l: 'Sidebar' }, { v: 'wizard', l: 'Wizard' }].map(o => (
+                  <div key={o.v} onClick={() => setTweak('segmentBuilderLayout', o.v)} style={{
+                    padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
+                    fontSize: 11, fontWeight: 500,
+                    border: `1px solid ${tweaks.segmentBuilderLayout === o.v ? T.brand : T.n200}`,
+                    background: tweaks.segmentBuilderLayout === o.v ? T.brandSoft : '#fff',
+                    color: tweaks.segmentBuilderLayout === o.v ? T.brand : T.n700,
+                  }}>{o.l}</div>
+                ))}
+              </div>
+            </div>
 
-// ─── Top Tabs nav ──────────────────────────────────────────────
-function TopTabs({ page, setPage, role, setRole }) {
-  const r = ROLES.find(x => x.id === role);
-  const allItems = NAV.flatMap(s => s.items);
-  const visible = allItems.filter(i => !r.pages || r.pages.has(i.id));
-  useLucide(page);
-  return (
-    <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8, background: T.n950,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-        }}>v<span style={{ color: T.brand }}>G</span></div>
-        <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine</div>
-        <div style={{ flex: 1 }} />
-        <Input size="sm" leftIcon="search" placeholder="Search segments, features…" style={{ width: 280 }} />
-        <Button variant="ghost" size="icon-sm"><Icon name="bell" size={14} /></Button>
-        <RoleSwitcher role={role} onChange={setRole} />
-      </div>
-      <div style={{ padding: '0 20px', display: 'flex', gap: 4, overflow: 'auto' }}>
-        {visible.map(item => {
-          const active = page === item.id;
-          return (
-            <div key={item.id} onClick={() => setPage(item.id)} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '10px 12px', fontSize: 12, fontFamily: T.fSans, fontWeight: 500,
-              color: active ? T.n950 : T.n600, cursor: 'pointer',
-              borderBottom: `2px solid ${active ? T.brand : 'transparent'}`,
-              marginBottom: -1,
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Live monitor chart</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                {[{ v: 'area', l: 'Area' }, { v: 'line', l: 'Line' }].map(o => (
+                  <div key={o.v} onClick={() => setTweak('chartType', o.v)} style={{
+                    padding: '7px 6px', borderRadius: 6, textAlign: 'center', cursor: 'pointer',
+                    fontSize: 11, fontWeight: 500,
+                    border: `1px solid ${tweaks.chartType === o.v ? T.brand : T.n200}`,
+                    background: tweaks.chartType === o.v ? T.brandSoft : '#fff',
+                    color: tweaks.chartType === o.v ? T.brand : T.n700,
+                  }}>{o.l}</div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 12, color: T.n900, fontWeight: 500 }}>Dark mode</div>
+                <div style={{ fontSize: 11, color: T.n500 }}>Invert the neutral palette</div>
+              </div>
+              <Switch checked={tweaks.darkMode} onChange={v => setTweak('darkMode', v)} />
+            </div>
+
+            <a href="variations.html" style={{
+              display: 'block', padding: '10px 12px', borderRadius: 8, background: T.n950, color: '#fff',
+              fontSize: 12, fontWeight: 500, textDecoration: 'none', textAlign: 'center',
             }}>
-              <Icon name={item.icon} size={13} color={active ? T.brand : T.n500} />
-              {item.label}
-              {item.live && <span style={{ width: 5, height: 5, borderRadius: 9999, background: '#22c55e', animation: 'pulse-dot 1.6s infinite' }} />}
+              Open variations canvas →
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Role Switcher ─────────────────────────────────────────────
+    function RoleSwitcher({ role, onChange }) {
+      const [open, setOpen] = React.useState(false);
+      const r = ROLES.find(x => x.id === role);
+      return (
+        <div style={{ position: 'relative' }}>
+          <div onClick={() => setOpen(o => !o)} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 6px 6px',
+            borderRadius: 8, cursor: 'pointer', background: T.n100, border: `1px solid ${T.n200}`,
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 7, background: r.color, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', fontFamily: T.fSans,
+            }}>{r.initial}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: T.n500, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>Viewing as</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.n900, lineHeight: 1.2 }}>{r.label}</div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+            <Icon name="chevrons-up-down" size={13} color={T.n500} />
+          </div>
+          {open && (
+            <>
+              <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 51,
+                background: '#fff', borderRadius: 10, border: `1px solid ${T.n200}`,
+                boxShadow: '0 20px 40px -10px rgba(0,0,0,0.25)', padding: 4, minWidth: 240,
+              }}>
+                {ROLES.map(rr => (
+                  <div key={rr.id} onClick={() => { onChange(rr.id); setOpen(false); }} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                    background: rr.id === role ? T.brandSoft : 'transparent',
+                  }} onMouseEnter={e => { if (rr.id !== role) e.currentTarget.style.background = T.n50; }}
+                    onMouseLeave={e => { if (rr.id !== role) e.currentTarget.style.background = 'transparent'; }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: 6, background: rr.color, color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 700,
+                    }}>{rr.initial}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: T.n900 }}>{rr.label}</div>
+                      <div style={{ fontSize: 10, color: T.n500 }}>
+                        {rr.pages ? `${rr.pages.size} pages` : 'All pages'}
+                      </div>
+                    </div>
+                    {rr.id === role && <Icon name="check" size={13} color={T.brand} />}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
 
-// ─── Stepper nav ───────────────────────────────────────────────
-function Stepper({ page, setPage, role, setRole }) {
-  const r = ROLES.find(x => x.id === role);
-  const allItems = NAV.flatMap(s => s.items);
-  const visible = allItems.filter(i => !r.pages || r.pages.has(i.id));
-  const curIdx = visible.findIndex(i => i.id === page);
-  useLucide(page);
-  return (
-    <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
+    // ─── Left Rail ─────────────────────────────────────────────────
+    function LeftRail({ page, setPage, role, setRole }) {
+      const r = ROLES.find(x => x.id === role);
+      useLucide(page);
+      return (
         <div style={{
-          width: 32, height: 32, borderRadius: 8, background: T.n950,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
-        }}>v<span style={{ color: T.brand }}>G</span></div>
-        <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine · Workflow</div>
-        <div style={{ flex: 1 }} />
-        <RoleSwitcher role={role} onChange={setRole} />
-      </div>
-      <div style={{ display: 'flex', padding: '12px 20px', gap: 0, overflow: 'auto', alignItems: 'center' }}>
-        {visible.map((item, i) => {
-          const active = i === curIdx;
-          const done = i < curIdx;
-          return (
-            <React.Fragment key={item.id}>
-              <div onClick={() => setPage(item.id)} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '6px 12px', borderRadius: 9999,
-                fontSize: 12, fontFamily: T.fSans, fontWeight: 500,
-                color: active ? '#fff' : done ? T.n900 : T.n600, cursor: 'pointer',
-                background: active ? T.brand : done ? T.brandSoft : T.n100,
-                border: done ? `1px solid ${T.brandBorder}` : '1px solid transparent',
-                flexShrink: 0,
-              }}>
-                <div style={{
-                  width: 18, height: 18, borderRadius: 9999,
-                  background: active ? '#fff' : done ? T.brand : T.n300,
-                  color: active ? T.brand : '#fff',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700,
-                }}>{done ? '✓' : i + 1}</div>
-                {item.label}
+          width: 248, background: '#fff', borderRight: `1px solid ${T.n200}`,
+          display: 'flex', flexDirection: 'column', flexShrink: 0,
+        }}>
+          {/* brand */}
+          <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${T.n200}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8, background: T.n950,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
+              }}>v<span style={{ color: T.brand }}>G</span></div>
+              <div>
+                <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950, lineHeight: 1.1, letterSpacing: '-0.01em' }}>LiveOps Engine</div>
+                <div style={{ fontFamily: T.fSans, fontSize: 10, color: T.n500, marginTop: 2 }}>GDS · VNGGames</div>
               </div>
-              {i < visible.length - 1 && <div style={{ width: 20, height: 1, background: T.n300 }} />}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Segment Builder: Sidebar variant ──────────────────────────
-function SegmentBuilderSidebar() {
-  return (
-    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'auto', background: T.n50 }}>
-      <div>
-        <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Segment builder · Sidebar variant</div>
-        <h1 style={{ fontFamily: T.fDisp, fontSize: 40, fontWeight: 400, lineHeight: 0.98, letterSpacing: '0.005em', textTransform: 'uppercase', color: T.n950, margin: 0 }}>PTG High-Value at Risk</h1>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-        <Card padding={0}>
-          <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900 }}>Filters</div>
-            <Badge variant="secondary">3 active</Badge>
-            <div style={{ flex: 1 }} />
-            <Button variant="outline" size="sm" leftIcon="plus">Add filter</Button>
+            </div>
           </div>
-          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              { f: 'purchase_amount_30d', op: '≥', v: '50 USD', matches: '68.2K', icon: 'filter' },
-              { f: 'sessions_last_7d',    op: '≥', v: '3 sessions', matches: '942K', icon: 'filter' },
-              { f: 'churn_risk_score',    op: '≥', v: '0.6 (propensity v4)', matches: '184K', icon: 'sparkles', ml: true },
-            ].map((f, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: 12,
-                borderRadius: 8, border: `1px solid ${T.n200}`, background: '#fff',
-              }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: f.ml ? '#faf5ff' : T.brandSoft, color: f.ml ? T.purple500 : T.brand,
-                }}><Icon name={f.icon} size={14} /></div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: T.fMono, fontSize: 12, fontWeight: 600, color: T.n900 }}>{f.f}</div>
-                  <div style={{ fontFamily: T.fSans, fontSize: 11, color: T.n500, marginTop: 2 }}>{f.op} {f.v} · matches {f.matches}</div>
+
+          {/* role */}
+          <div style={{ padding: 12, borderBottom: `1px solid ${T.n200}` }}>
+            <RoleSwitcher role={role} onChange={setRole} />
+          </div>
+
+          {/* nav */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '12px 8px' }}>
+            {NAV.map(sec => {
+              const visible = sec.items.filter(i => !r.pages || r.pages.has(i.id));
+              if (!visible.length) return null;
+              return (
+                <div key={sec.group} style={{ marginBottom: 16 }}>
+                  <div style={{
+                    fontFamily: T.fSans, fontSize: 10, fontWeight: 600, color: T.n400,
+                    padding: '4px 12px 6px', letterSpacing: '0.08em', textTransform: 'uppercase',
+                  }}>{sec.group}</div>
+                  {visible.map(item => {
+                    const active = page === item.id;
+                    return (
+                      <div key={item.id} onClick={() => setPage(item.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 12px', borderRadius: 7, cursor: 'pointer',
+                        fontFamily: T.fSans, fontSize: 13, fontWeight: 500,
+                        color: active ? T.n950 : T.n700,
+                        background: active ? T.n100 : 'transparent',
+                        marginBottom: 1,
+                        position: 'relative',
+                      }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.n50; }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
+                        {active && <span style={{ position: 'absolute', left: -8, top: 8, bottom: 8, width: 3, borderRadius: 2, background: T.brand }} />}
+                        <Icon name={item.icon} size={15} color={active ? T.brand : T.n500} />
+                        <span style={{ flex: 1 }}>{item.label}</span>
+                        {item.live && <span style={{
+                          width: 6, height: 6, borderRadius: 9999, background: '#22c55e',
+                          boxShadow: '0 0 0 0 rgba(34,197,94,0.5)', animation: 'pulse-dot 1.6s infinite',
+                        }} />}
+                        {item.primary && !active && <Badge variant="brandSoft" style={{ padding: '1px 6px', fontSize: 9 }}>hot</Badge>}
+                      </div>
+                    );
+                  })}
                 </div>
-                <Select size="sm" value="and" onChange={() => {}} options={[{ value: 'and', label: 'AND' }, { value: 'or', label: 'OR' }]} />
-                <Button variant="ghost" size="icon-sm"><Icon name="trash-2" size={13} /></Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </Card>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Card padding={18}>
-            <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Live segment size</div>
-            <div style={{ fontFamily: T.fDisp, fontSize: 42, color: T.n950, lineHeight: 1, textTransform: 'uppercase' }}>18,420</div>
-            <div style={{ fontFamily: T.fSans, fontSize: 12, color: T.green600, fontWeight: 600, marginTop: 4 }}>+312 / 24h · trending up</div>
-          </Card>
-          <Card padding={18}>
-            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900, marginBottom: 10 }}>Generated SQL</div>
-            <pre style={{ margin: 0, fontFamily: T.fMono, fontSize: 10.5, lineHeight: 1.5, color: T.n600, whiteSpace: 'pre-wrap' }}>
-{`SELECT user_id
+          {/* footer */}
+          <div style={{ padding: 12, borderTop: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Avatar name={r.label} size={28} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: T.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Linh Pham</div>
+              <div style={{ fontSize: 10, color: T.n500 }}>khoi.tran@vng.com.vn</div>
+            </div>
+            <Button variant="ghost" size="icon-sm"><Icon name="settings" size={13} /></Button>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Top Tabs nav ──────────────────────────────────────────────
+    function TopTabs({ page, setPage, role, setRole }) {
+      const r = ROLES.find(x => x.id === role);
+      const allItems = NAV.flatMap(s => s.items);
+      const visible = allItems.filter(i => !r.pages || r.pages.has(i.id));
+      useLucide(page);
+      return (
+        <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, background: T.n950,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+              fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
+            }}>v<span style={{ color: T.brand }}>G</span></div>
+            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine</div>
+            <div style={{ flex: 1 }} />
+            <Input size="sm" leftIcon="search" placeholder="Search segments, features…" style={{ width: 280 }} />
+            <Button variant="ghost" size="icon-sm"><Icon name="bell" size={14} /></Button>
+            <RoleSwitcher role={role} onChange={setRole} />
+          </div>
+          <div style={{ padding: '0 20px', display: 'flex', gap: 4, overflow: 'auto' }}>
+            {visible.map(item => {
+              const active = page === item.id;
+              return (
+                <div key={item.id} onClick={() => setPage(item.id)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '10px 12px', fontSize: 12, fontFamily: T.fSans, fontWeight: 500,
+                  color: active ? T.n950 : T.n600, cursor: 'pointer',
+                  borderBottom: `2px solid ${active ? T.brand : 'transparent'}`,
+                  marginBottom: -1,
+                }}>
+                  <Icon name={item.icon} size={13} color={active ? T.brand : T.n500} />
+                  {item.label}
+                  {item.live && <span style={{ width: 5, height: 5, borderRadius: 9999, background: '#22c55e', animation: 'pulse-dot 1.6s infinite' }} />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Stepper nav ───────────────────────────────────────────────
+    function Stepper({ page, setPage, role, setRole }) {
+      const r = ROLES.find(x => x.id === role);
+      const allItems = NAV.flatMap(s => s.items);
+      const visible = allItems.filter(i => !r.pages || r.pages.has(i.id));
+      const curIdx = visible.findIndex(i => i.id === page);
+      useLucide(page);
+      return (
+        <div style={{ background: '#fff', borderBottom: `1px solid ${T.n200}`, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', gap: 14 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, background: T.n950,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+              fontFamily: T.fSans, fontStyle: 'italic', fontSize: 13, fontWeight: 700,
+            }}>v<span style={{ color: T.brand }}>G</span></div>
+            <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n950 }}>LiveOps Engine · Workflow</div>
+            <div style={{ flex: 1 }} />
+            <RoleSwitcher role={role} onChange={setRole} />
+          </div>
+          <div style={{ display: 'flex', padding: '12px 20px', gap: 0, overflow: 'auto', alignItems: 'center' }}>
+            {visible.map((item, i) => {
+              const active = i === curIdx;
+              const done = i < curIdx;
+              return (
+                <React.Fragment key={item.id}>
+                  <div onClick={() => setPage(item.id)} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '6px 12px', borderRadius: 9999,
+                    fontSize: 12, fontFamily: T.fSans, fontWeight: 500,
+                    color: active ? '#fff' : done ? T.n900 : T.n600, cursor: 'pointer',
+                    background: active ? T.brand : done ? T.brandSoft : T.n100,
+                    border: done ? `1px solid ${T.brandBorder}` : '1px solid transparent',
+                    flexShrink: 0,
+                  }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 9999,
+                      background: active ? '#fff' : done ? T.brand : T.n300,
+                      color: active ? T.brand : '#fff',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 700,
+                    }}>{done ? '✓' : i + 1}</div>
+                    {item.label}
+                  </div>
+                  {i < visible.length - 1 && <div style={{ width: 20, height: 1, background: T.n300 }} />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Segment Builder: Sidebar variant ──────────────────────────
+    function SegmentBuilderSidebar() {
+      return (
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'auto', background: T.n50 }}>
+          <div>
+            <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Segment builder · Sidebar variant</div>
+            <h1 style={{ fontFamily: T.fDisp, fontSize: 40, fontWeight: 400, lineHeight: 0.98, letterSpacing: '0.005em', textTransform: 'uppercase', color: T.n950, margin: 0 }}>PTG High-Value at Risk</h1>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+            <Card padding={0}>
+              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900 }}>Filters</div>
+                <Badge variant="secondary">3 active</Badge>
+                <div style={{ flex: 1 }} />
+                <Button variant="outline" size="sm" leftIcon="plus">Add filter</Button>
+              </div>
+              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { f: 'purchase_amount_30d', op: '≥', v: '50 USD', matches: '68.2K', icon: 'filter' },
+                  { f: 'sessions_last_7d', op: '≥', v: '3 sessions', matches: '942K', icon: 'filter' },
+                  { f: 'churn_risk_score', op: '≥', v: '0.6 (propensity v4)', matches: '184K', icon: 'sparkles', ml: true },
+                ].map((f, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: 12,
+                    borderRadius: 8, border: `1px solid ${T.n200}`, background: '#fff',
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: f.ml ? '#faf5ff' : T.brandSoft, color: f.ml ? T.purple500 : T.brand,
+                    }}><Icon name={f.icon} size={14} /></div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: T.fMono, fontSize: 12, fontWeight: 600, color: T.n900 }}>{f.f}</div>
+                      <div style={{ fontFamily: T.fSans, fontSize: 11, color: T.n500, marginTop: 2 }}>{f.op} {f.v} · matches {f.matches}</div>
+                    </div>
+                    <Select size="sm" value="and" onChange={() => { }} options={[{ value: 'and', label: 'AND' }, { value: 'or', label: 'OR' }]} />
+                    <Button variant="ghost" size="icon-sm"><Icon name="trash-2" size={13} /></Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Card padding={18}>
+                <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Live segment size</div>
+                <div style={{ fontFamily: T.fDisp, fontSize: 42, color: T.n950, lineHeight: 1, textTransform: 'uppercase' }}>18,420</div>
+                <div style={{ fontFamily: T.fSans, fontSize: 12, color: T.green600, fontWeight: 600, marginTop: 4 }}>+312 / 24h · trending up</div>
+              </Card>
+              <Card padding={18}>
+                <div style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900, marginBottom: 10 }}>Generated SQL</div>
+                <pre style={{ margin: 0, fontFamily: T.fMono, fontSize: 10.5, lineHeight: 1.5, color: T.n600, whiteSpace: 'pre-wrap' }}>
+                  {`SELECT user_id
 FROM features.player_daily
 WHERE game = 'PTG'
   AND purchase_amount_30d >= 50
   AND sessions_last_7d >= 3
   AND churn_risk_score >= 0.6`}
-            </pre>
-          </Card>
-          <Button variant="primary" size="default" leftIcon="rocket">Activate segment</Button>
+                </pre>
+              </Card>
+              <Button variant="primary" size="default" leftIcon="rocket">Activate segment</Button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Segment Builder: Wizard variant ──────────────────────────
-function SegmentBuilderWizard() {
-  const [step, setStep] = React.useState(2);
-  const steps = [
-    { id: 0, label: 'Pick population',   icon: 'users' },
-    { id: 1, label: 'Add filters',       icon: 'filter' },
-    { id: 2, label: 'Layer ML',          icon: 'sparkles' },
-    { id: 3, label: 'Preview & activate',icon: 'rocket' },
-  ];
-  useLucide(step);
-  return (
-    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, height: '100%', overflow: 'auto', background: T.n50 }}>
-      <div>
-        <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Segment builder · Wizard variant</div>
-        <h1 style={{ fontFamily: T.fDisp, fontSize: 40, fontWeight: 400, lineHeight: 0.98, letterSpacing: '0.005em', textTransform: 'uppercase', color: T.n950, margin: 0 }}>Build a segment in 4 steps</h1>
-      </div>
-
-      {/* steps */}
-      <div style={{ display: 'flex', gap: 0, background: '#fff', borderRadius: 12, border: `1px solid ${T.n200}`, padding: 4 }}>
-        {steps.map((s, i) => {
-          const active = step === s.id, done = step > s.id;
-          return (
-            <div key={s.id} onClick={() => setStep(s.id)} style={{
-              flex: 1, display: 'flex', alignItems: 'center', gap: 10,
-              padding: '12px 14px', borderRadius: 8, cursor: 'pointer',
-              background: active ? T.brandSoft : 'transparent',
-              border: `1px solid ${active ? T.brandBorder : 'transparent'}`,
-            }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: 9999,
-                background: active ? T.brand : done ? '#d1fae5' : T.n100,
-                color: active ? '#fff' : done ? T.green600 : T.n500,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontWeight: 700,
-              }}>{done ? '✓' : i + 1}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: T.n500, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Step {i + 1}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: T.n900 }}>{s.label}</div>
-              </div>
-              <Icon name={s.icon} size={16} color={active ? T.brand : T.n400} />
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-        <Card padding={22}>
-          <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.brand, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>Step 3 of 4</div>
-          <div style={{ fontFamily: T.fDisp, fontSize: 32, color: T.n950, textTransform: 'uppercase', marginBottom: 6 }}>Layer in a propensity model</div>
-          <div style={{ fontFamily: T.fSans, fontSize: 13, color: T.n500, marginBottom: 20 }}>Narrow the segment to players predicted to churn, based on our production ML models. Optional — skip if you just want rule-based targeting.</div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { name: 'PTG Churn v4', target: 'Will churn in 14 days', auc: 0.872, selected: true },
-              { name: 'PTG Propensity to Pay v7', target: 'Will spend $5+ in 7d', auc: 0.814, selected: false },
-              { name: 'Skip — rule-based only', target: 'Use only the filters above',  auc: null, selected: false },
-            ].map((m, i) => (
-              <div key={i} style={{
-                padding: 14, borderRadius: 10, cursor: 'pointer',
-                border: `2px solid ${m.selected ? T.brand : T.n200}`,
-                background: m.selected ? T.brandSoft : '#fff',
-                display: 'flex', alignItems: 'center', gap: 14,
-              }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: 9999,
-                  border: `2px solid ${m.selected ? T.brand : T.n300}`,
-                  background: m.selected ? T.brand : '#fff',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>{m.selected && <div style={{ width: 8, height: 8, borderRadius: 9999, background: '#fff' }} />}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <Icon name={m.auc ? 'sparkles' : 'x-circle'} size={14} color={m.auc ? T.purple500 : T.n400} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: T.n900 }}>{m.name}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: T.n500 }}>{m.target}</div>
-                </div>
-                {m.auc && (
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: T.fMono, fontSize: 13, fontWeight: 600, color: T.n900 }}>AUC {m.auc}</div>
-                    <div style={{ fontSize: 10, color: T.n500 }}>production</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 20, padding: 16, borderRadius: 10, border: `1px solid ${T.n200}`, background: T.n50 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 8, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Threshold</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ height: 6, background: T.n200, borderRadius: 3, position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', background: `linear-gradient(90deg, ${T.green600}, ${T.amber500}, ${T.red600})`, borderRadius: 3 }} />
-                  <div style={{ position: 'absolute', left: '60%', top: -5, width: 16, height: 16, borderRadius: 9999, background: '#fff', border: `2px solid ${T.brand}`, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: T.fMono, fontSize: 10, color: T.n500, marginTop: 4 }}>
-                  <span>0.0 low risk</span><span>0.6 ← selected</span><span>1.0 high risk</span>
-                </div>
-              </div>
-              <Input size="sm" value="0.6" onChange={() => {}} style={{ width: 72 }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-            <Button variant="outline" size="default" leftIcon="arrow-left" onClick={() => setStep(step - 1)}>Back</Button>
-            <div style={{ flex: 1 }} />
-            <Button variant="ghost" size="default">Skip</Button>
-            <Button variant="primary" size="default" rightIcon="arrow-right" onClick={() => setStep(step + 1)}>Preview segment</Button>
-          </div>
-        </Card>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Card padding={18}>
-            <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Segment size (est.)</div>
-            <div style={{ fontFamily: T.fDisp, fontSize: 42, color: T.n950, lineHeight: 1, textTransform: 'uppercase' }}>18,420</div>
-            <div style={{ fontFamily: T.fSans, fontSize: 12, color: T.n600, marginTop: 6 }}>Narrowed from 2.4M PTG players through 3 filters + 1 model.</div>
-          </Card>
-          <Card padding={18}>
-            <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 10, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decisions so far</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}><Icon name="check-circle-2" size={13} color={T.green600} /><span><strong style={{ color: T.n900 }}>Population:</strong> <span style={{ color: T.n600 }}>PTG Players (2.4M)</span></span></div>
-              <div style={{ display: 'flex', gap: 8 }}><Icon name="check-circle-2" size={13} color={T.green600} /><span><strong style={{ color: T.n900 }}>Filters:</strong> <span style={{ color: T.n600 }}>3 added</span></span></div>
-              <div style={{ display: 'flex', gap: 8 }}><Icon name="circle-dot" size={13} color={T.brand} /><span><strong style={{ color: T.n900 }}>ML model:</strong> <span style={{ color: T.n600 }}>PTG Churn v4</span></span></div>
-              <div style={{ display: 'flex', gap: 8 }}><Icon name="circle" size={13} color={T.n300} /><span style={{ color: T.n400 }}><strong>Activation:</strong> pending</span></div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// APP
-// ═══════════════════════════════════════════════════════════════════════
-function App() {
-  const [tweaks, setTweaks] = React.useState({ ...TWEAKS, ...loadLocal() });
-  const [role, setRoleRaw] = React.useState(() => localStorage.getItem('lo_role') || 'liveops');
-  const setRole = React.useCallback((newRole) => {
-    setRoleRaw(newRole);
-    localStorage.setItem('lo_role', newRole);
-    // If the current page isn't allowed for this role, jump to that role's default
-    const r = ROLES.find(x => x.id === newRole);
-    setPage(prev => (!r.pages || r.pages.has(prev)) ? prev : r.defaultPage);
-  }, []);
-  const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'builder');
-  const [showTweaks, setShowTweaks] = React.useState(false);
-
-  function loadLocal() {
-    try { return JSON.parse(localStorage.getItem('lo_tweaks') || '{}'); } catch { return {}; }
-  }
-
-  React.useEffect(() => { localStorage.setItem('lo_tweaks', JSON.stringify(tweaks)); }, [tweaks]);
-  React.useEffect(() => { localStorage.setItem('lo_page', page); }, [page]);
-
-  const setTweak = (k, v) => {
-    setTweaks(t => ({ ...t, [k]: v }));
-    window.parent?.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
-  };
-
-  // Edit mode host protocol
-  React.useEffect(() => {
-    const onMsg = (e) => {
-      if (e.data?.type === '__activate_edit_mode') setShowTweaks(true);
-      if (e.data?.type === '__deactivate_edit_mode') setShowTweaks(false);
-    };
-    window.addEventListener('message', onMsg);
-    window.parent?.postMessage({ type: '__edit_mode_available' }, '*');
-    return () => window.removeEventListener('message', onMsg);
-  }, []);
-
-  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [page, role, tweaks]);
-
-  // Dark mode CSS variable overrides (applied globally)
-  const isDark = tweaks.darkMode;
-
-  const renderPage = () => {
-    switch (page) {
-      case 'connectors': return <DataConnectors />;
-      case 'explorer':   return <RawExplorer />;
-      case 'features':   return <FeatureBuilder />;
-      case 'models':     return <PropensityModels />;
-      case 'builder':
-        if (tweaks.segmentBuilderLayout === 'sidebar') return <SegmentBuilderSidebar />;
-        if (tweaks.segmentBuilderLayout === 'wizard')  return <SegmentBuilderWizard />;
-        return <SegmentBuilder />;
-      case 'monitor':    return <LiveMonitor chartType={tweaks.chartType} />;
-      case 'campaigns':  return <Campaigns />;
-      case 'analytics':  return <GameAnalytics />;
-      default:           return <SegmentBuilder />;
+      );
     }
-  };
 
-  const wrapperBg = isDark ? '#0a0a0a' : T.n50;
-  const wrapperFilter = isDark ? 'invert(1) hue-rotate(180deg)' : 'none';
+    // ─── Segment Builder: Wizard variant ──────────────────────────
+    function SegmentBuilderWizard() {
+      const [step, setStep] = React.useState(2);
+      const steps = [
+        { id: 0, label: 'Pick population', icon: 'users' },
+        { id: 1, label: 'Add filters', icon: 'filter' },
+        { id: 2, label: 'Layer ML', icon: 'sparkles' },
+        { id: 3, label: 'Preview & activate', icon: 'rocket' },
+      ];
+      useLucide(step);
+      return (
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, height: '100%', overflow: 'auto', background: T.n50 }}>
+          <div>
+            <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Segment builder · Wizard variant</div>
+            <h1 style={{ fontFamily: T.fDisp, fontSize: 40, fontWeight: 400, lineHeight: 0.98, letterSpacing: '0.005em', textTransform: 'uppercase', color: T.n950, margin: 0 }}>Build a segment in 4 steps</h1>
+          </div>
 
-  return (
-    <div data-screen-label={page} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: wrapperBg, filter: wrapperFilter }}>
-      {tweaks.navStyle === 'top-tabs' && <TopTabs page={page} setPage={setPage} role={role} setRole={setRole} />}
-      {tweaks.navStyle === 'stepper' && <Stepper page={page} setPage={setPage} role={role} setRole={setRole} />}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {tweaks.navStyle === 'left-rail' && <LeftRail page={page} setPage={setPage} role={role} setRole={setRole} />}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {tweaks.navStyle === 'left-rail' && (
-            <div style={{ padding: '10px 24px', background: '#fff', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fSans, fontSize: 12, color: T.n500 }}>
-                <span>LiveOps Engine</span>
-                <Icon name="chevron-right" size={11} />
-                <span style={{ color: T.n900, fontWeight: 500, textTransform: 'capitalize' }}>{NAV.flatMap(s=>s.items).find(i=>i.id===page)?.label}</span>
+          {/* steps */}
+          <div style={{ display: 'flex', gap: 0, background: '#fff', borderRadius: 12, border: `1px solid ${T.n200}`, padding: 4 }}>
+            {steps.map((s, i) => {
+              const active = step === s.id, done = step > s.id;
+              return (
+                <div key={s.id} onClick={() => setStep(s.id)} style={{
+                  flex: 1, display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '12px 14px', borderRadius: 8, cursor: 'pointer',
+                  background: active ? T.brandSoft : 'transparent',
+                  border: `1px solid ${active ? T.brandBorder : 'transparent'}`,
+                }}>
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 9999,
+                    background: active ? T.brand : done ? '#d1fae5' : T.n100,
+                    color: active ? '#fff' : done ? T.green600 : T.n500,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700,
+                  }}>{done ? '✓' : i + 1}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, color: T.n500, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Step {i + 1}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.n900 }}>{s.label}</div>
+                  </div>
+                  <Icon name={s.icon} size={16} color={active ? T.brand : T.n400} />
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+            <Card padding={22}>
+              <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.brand, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>Step 3 of 4</div>
+              <div style={{ fontFamily: T.fDisp, fontSize: 32, color: T.n950, textTransform: 'uppercase', marginBottom: 6 }}>Layer in a propensity model</div>
+              <div style={{ fontFamily: T.fSans, fontSize: 13, color: T.n500, marginBottom: 20 }}>Narrow the segment to players predicted to churn, based on our production ML models. Optional — skip if you just want rule-based targeting.</div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { name: 'PTG Churn v4', target: 'Will churn in 14 days', auc: 0.872, selected: true },
+                  { name: 'PTG Propensity to Pay v7', target: 'Will spend $5+ in 7d', auc: 0.814, selected: false },
+                  { name: 'Skip — rule-based only', target: 'Use only the filters above', auc: null, selected: false },
+                ].map((m, i) => (
+                  <div key={i} style={{
+                    padding: 14, borderRadius: 10, cursor: 'pointer',
+                    border: `2px solid ${m.selected ? T.brand : T.n200}`,
+                    background: m.selected ? T.brandSoft : '#fff',
+                    display: 'flex', alignItems: 'center', gap: 14,
+                  }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 9999,
+                      border: `2px solid ${m.selected ? T.brand : T.n300}`,
+                      background: m.selected ? T.brand : '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{m.selected && <div style={{ width: 8, height: 8, borderRadius: 9999, background: '#fff' }} />}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                        <Icon name={m.auc ? 'sparkles' : 'x-circle'} size={14} color={m.auc ? T.purple500 : T.n400} />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: T.n900 }}>{m.name}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: T.n500 }}>{m.target}</div>
+                    </div>
+                    {m.auc && (
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontFamily: T.fMono, fontSize: 13, fontWeight: 600, color: T.n900 }}>AUC {m.auc}</div>
+                        <div style={{ fontSize: 10, color: T.n500 }}>production</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div style={{ flex: 1 }} />
-              <Input size="sm" leftIcon="search" placeholder="Search segments, features, tables…" style={{ width: 300 }} />
-              <Button variant="ghost" size="icon-sm"><Icon name="git-pull-request" size={14} /></Button>
-              <Button variant="ghost" size="icon-sm"><Icon name="bell" size={14} /></Button>
-              <div style={{ width: 1, height: 20, background: T.n200, margin: '0 4px' }} />
-              <Button variant="outline" size="sm" leftIcon="sliders-horizontal" onClick={() => setShowTweaks(s => !s)}>Tweaks</Button>
+
+              <div style={{ marginTop: 20, padding: 16, borderRadius: 10, border: `1px solid ${T.n200}`, background: T.n50 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 8, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Threshold</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ height: 6, background: T.n200, borderRadius: 3, position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', background: `linear-gradient(90deg, ${T.green600}, ${T.amber500}, ${T.red600})`, borderRadius: 3 }} />
+                      <div style={{ position: 'absolute', left: '60%', top: -5, width: 16, height: 16, borderRadius: 9999, background: '#fff', border: `2px solid ${T.brand}`, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: T.fMono, fontSize: 10, color: T.n500, marginTop: 4 }}>
+                      <span>0.0 low risk</span><span>0.6 ← selected</span><span>1.0 high risk</span>
+                    </div>
+                  </div>
+                  <Input size="sm" value="0.6" onChange={() => { }} style={{ width: 72 }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                <Button variant="outline" size="default" leftIcon="arrow-left" onClick={() => setStep(step - 1)}>Back</Button>
+                <div style={{ flex: 1 }} />
+                <Button variant="ghost" size="default">Skip</Button>
+                <Button variant="primary" size="default" rightIcon="arrow-right" onClick={() => setStep(step + 1)}>Preview segment</Button>
+              </div>
+            </Card>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Card padding={18}>
+                <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 6 }}>Segment size (est.)</div>
+                <div style={{ fontFamily: T.fDisp, fontSize: 42, color: T.n950, lineHeight: 1, textTransform: 'uppercase' }}>18,420</div>
+                <div style={{ fontFamily: T.fSans, fontSize: 12, color: T.n600, marginTop: 6 }}>Narrowed from 2.4M PTG players through 3 filters + 1 model.</div>
+              </Card>
+              <Card padding={18}>
+                <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, marginBottom: 10, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decisions so far</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+                  <div style={{ display: 'flex', gap: 8 }}><Icon name="check-circle-2" size={13} color={T.green600} /><span><strong style={{ color: T.n900 }}>Population:</strong> <span style={{ color: T.n600 }}>PTG Players (2.4M)</span></span></div>
+                  <div style={{ display: 'flex', gap: 8 }}><Icon name="check-circle-2" size={13} color={T.green600} /><span><strong style={{ color: T.n900 }}>Filters:</strong> <span style={{ color: T.n600 }}>3 added</span></span></div>
+                  <div style={{ display: 'flex', gap: 8 }}><Icon name="circle-dot" size={13} color={T.brand} /><span><strong style={{ color: T.n900 }}>ML model:</strong> <span style={{ color: T.n600 }}>PTG Churn v4</span></span></div>
+                  <div style={{ display: 'flex', gap: 8 }}><Icon name="circle" size={13} color={T.n300} /><span style={{ color: T.n400 }}><strong>Activation:</strong> pending</span></div>
+                </div>
+              </Card>
             </div>
-          )}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            {renderPage()}
           </div>
         </div>
-      </div>
-      <TweaksPanel tweaks={tweaks} setTweak={setTweak} visible={showTweaks} onClose={() => setShowTweaks(false)} />
-    </div>
-  );
-}
+      );
+    }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // APP
+    // ═══════════════════════════════════════════════════════════════════════
+    function App() {
+      const [tweaks, setTweaks] = React.useState({ ...TWEAKS, ...loadLocal() });
+      const [role, setRoleRaw] = React.useState(() => localStorage.getItem('lo_role') || 'liveops');
+      const setRole = React.useCallback((newRole) => {
+        setRoleRaw(newRole);
+        localStorage.setItem('lo_role', newRole);
+        // If the current page isn't allowed for this role, jump to that role's default
+        const r = ROLES.find(x => x.id === newRole);
+        setPage(prev => (!r.pages || r.pages.has(prev)) ? prev : r.defaultPage);
+      }, []);
+      const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'builder');
+      const [showTweaks, setShowTweaks] = React.useState(false);
+
+      function loadLocal() {
+        try { return JSON.parse(localStorage.getItem('lo_tweaks') || '{}'); } catch { return {}; }
+      }
+
+      React.useEffect(() => { localStorage.setItem('lo_tweaks', JSON.stringify(tweaks)); }, [tweaks]);
+      React.useEffect(() => { localStorage.setItem('lo_page', page); }, [page]);
+
+      const setTweak = (k, v) => {
+        setTweaks(t => ({ ...t, [k]: v }));
+        window.parent?.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+      };
+
+      // Edit mode host protocol
+      React.useEffect(() => {
+        const onMsg = (e) => {
+          if (e.data?.type === '__activate_edit_mode') setShowTweaks(true);
+          if (e.data?.type === '__deactivate_edit_mode') setShowTweaks(false);
+        };
+        window.addEventListener('message', onMsg);
+        window.parent?.postMessage({ type: '__edit_mode_available' }, '*');
+        return () => window.removeEventListener('message', onMsg);
+      }, []);
+
+      React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [page, role, tweaks]);
+
+      // Dark mode CSS variable overrides (applied globally)
+      const isDark = tweaks.darkMode;
+
+      const renderPage = () => {
+        switch (page) {
+          case 'connectors': return <DataConnectors />;
+          case 'explorer': return <RawExplorer />;
+          case 'features': return <FeatureBuilder />;
+          case 'models': return <PropensityModels />;
+          case 'builder':
+            if (tweaks.segmentBuilderLayout === 'sidebar') return <SegmentBuilderSidebar />;
+            if (tweaks.segmentBuilderLayout === 'wizard') return <SegmentBuilderWizard />;
+            return <SegmentBuilder />;
+          case 'monitor': return <LiveMonitor chartType={tweaks.chartType} />;
+          case 'campaigns': return <Campaigns />;
+          case 'analytics': return <GameAnalytics />;
+          default: return <SegmentBuilder />;
+        }
+      };
+
+      const wrapperBg = isDark ? '#0a0a0a' : T.n50;
+      const wrapperFilter = isDark ? 'invert(1) hue-rotate(180deg)' : 'none';
+
+      return (
+        <div data-screen-label={page} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: wrapperBg, filter: wrapperFilter }}>
+          {tweaks.navStyle === 'top-tabs' && <TopTabs page={page} setPage={setPage} role={role} setRole={setRole} />}
+          {tweaks.navStyle === 'stepper' && <Stepper page={page} setPage={setPage} role={role} setRole={setRole} />}
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            {tweaks.navStyle === 'left-rail' && <LeftRail page={page} setPage={setPage} role={role} setRole={setRole} />}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {tweaks.navStyle === 'left-rail' && (
+                <div style={{ padding: '10px 24px', background: '#fff', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fSans, fontSize: 12, color: T.n500 }}>
+                    <span>LiveOps Engine</span>
+                    <Icon name="chevron-right" size={11} />
+                    <span style={{ color: T.n900, fontWeight: 500, textTransform: 'capitalize' }}>{NAV.flatMap(s => s.items).find(i => i.id === page)?.label}</span>
+                  </div>
+                  <div style={{ flex: 1 }} />
+                  <Input size="sm" leftIcon="search" placeholder="Search segments, features, tables…" style={{ width: 300 }} />
+                  <Button variant="ghost" size="icon-sm"><Icon name="git-pull-request" size={14} /></Button>
+                  <Button variant="ghost" size="icon-sm"><Icon name="bell" size={14} /></Button>
+                  <div style={{ width: 1, height: 20, background: T.n200, margin: '0 4px' }} />
+                  <Button variant="outline" size="sm" leftIcon="sliders-horizontal" onClick={() => setShowTweaks(s => !s)}>Tweaks</Button>
+                </div>
+              )}
+              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                {renderPage()}
+              </div>
+            </div>
+          </div>
+          <TweaksPanel tweaks={tweaks} setTweak={setTweak} visible={showTweaks} onClose={() => setShowTweaks(false)} />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 
 </body>
+
 </html>
