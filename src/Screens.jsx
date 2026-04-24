@@ -1,6 +1,7 @@
 import React from 'react';
 import { LineChart as LC2, Line as Ln2, AreaChart as AC2, Area as Ar2, BarChart as BC2, Bar as Br2, XAxis as XA2, YAxis as YA2, CartesianGrid as CG2, Tooltip as TT2, ResponsiveContainer as RC2 } from 'recharts';
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline } from './theme.jsx';
+import { LineageDrawer } from './LineageDrawer.jsx';
 import { GAMES, CONNECTORS, TABLES, FEATURES, MODELS, SEGMENTS, CAMPAIGNS, SAMPLE_ROWS } from './data.jsx';
 
 /* global React, Recharts, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline, CONNECTORS, TABLES, FEATURES, MODELS, CAMPAIGNS, SEGMENTS, GAMES, SAMPLE_ROWS */
@@ -229,14 +230,16 @@ LIMIT 1000;`);
 
 // ─── Feature Builder ─────────────────────────────────────────────
 function FeatureBuilder() {
-  useLucide(0);
+  // undefined = drawer closed; null = open with picker; feature object = open focused
+  const [lineage, setLineage] = React.useState(undefined);
+  useLucide(lineage);
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SectionHeader eyebrow="Step 2 · Features"
         title="Feature builder"
         description="Pre-aggregated features computed on a schedule. Use these in segments, models, and dashboards."
         right={<>
-          <Button variant="outline" size="sm" leftIcon="git-branch">Lineage</Button>
+          <Button variant="outline" size="sm" leftIcon="git-compare" onClick={() => setLineage(null)}>Lineage</Button>
           <Button variant="primary" size="sm" leftIcon="plus">New feature</Button>
         </>} />
 
@@ -265,7 +268,10 @@ function FeatureBuilder() {
           </thead>
           <tbody>
             {FEATURES.map(f => (
-              <tr key={f.id} style={{ borderBottom: `1px solid ${T.n100}`, transition: 'background .12s' }}
+              <tr key={f.id}
+                  onClick={() => setLineage(f)}
+                  title={`Open lineage for ${f.name}`}
+                  style={{ borderBottom: `1px solid ${T.n100}`, transition: 'background .12s', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background = T.n50}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <td style={{ padding: '10px 16px' }}>
@@ -289,13 +295,20 @@ function FeatureBuilder() {
                   <Sparkline data={[12, 18, 15, 22, 20, 26, 32, 28, 34, 30 + (f.id.length % 7), 36, 41]} color={f.agg === 'ML' ? '#a855f7' : T.brand} />
                 </td>
                 <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                  <Button variant="ghost" size="icon-sm"><Icon name="more-horizontal" size={14} /></Button>
+                  <Button variant="ghost" size="icon-sm" onClick={e => { e.stopPropagation(); }}><Icon name="more-horizontal" size={14} /></Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </Card>
+
+      {lineage !== undefined && (
+        <LineageDrawer
+          seed={lineage ? { kind: 'feature', entity: lineage } : null}
+          onClose={() => setLineage(undefined)}
+        />
+      )}
     </div>
   );
 }
@@ -303,6 +316,8 @@ function FeatureBuilder() {
 // ─── Propensity Models ──────────────────────────────────────────
 function PropensityModels() {
   const [selected, setSelected] = React.useState(MODELS[0]);
+  // undefined = drawer closed; null = picker; model object = focused
+  const [lineage, setLineage] = React.useState(undefined);
   useLucide(selected);
   const rocData = Array.from({ length: 11 }, (_, i) => ({ fpr: i / 10, tpr: Math.min(1, Math.pow(i / 10, 0.35)) }));
 
@@ -347,6 +362,7 @@ function PropensityModels() {
             <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Step 3 · Propensity model</div>
             <SectionHeader title={selected.name} description={selected.target}
               right={<>
+                <Button variant="outline" size="sm" leftIcon="git-compare" onClick={() => setLineage(selected)}>Lineage</Button>
                 <Button variant="outline" size="sm" leftIcon="refresh-cw">Retrain</Button>
                 <Button variant="outline" size="sm" leftIcon="flask-conical">Champion / challenger</Button>
                 <Button variant="primary" size="sm" leftIcon="rocket">Deploy</Button>
@@ -427,6 +443,13 @@ function PropensityModels() {
           </Card>
         </div>
       </div>
+
+      {lineage !== undefined && (
+        <LineageDrawer
+          seed={lineage ? { kind: 'model', entity: lineage } : null}
+          onClose={() => setLineage(undefined)}
+        />
+      )}
     </div>
   );
 }

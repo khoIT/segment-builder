@@ -27,36 +27,50 @@ const TABLES = [
   { name: 'events.player_transfer',   rows: '48M',     cols: 19, game: 'TFB', partition: 'event_date', freshness: '18m', pct: 98.8 },
 ];
 
+// Feature enrichment for lineage:
+//   metrics:     upstream BR_METRIC ids this feature reads from
+//   masterTable: upstream master table (from bedrockData.BR_MASTER_TABLES)
+//   model:       for ML features, the MODEL id that emits the score
 const FEATURES = [
-  { id: 'f_sessions_7d',    name: 'sessions_last_7d',          type: 'numeric', game: 'PTG', agg: 'COUNT',   window: '7d rolling', users: '2.4M', last: '1h ago',  q: 'count(session_id) FILTER …', owner: 'data.liveops' },
-  { id: 'f_purchase_30d',   name: 'purchase_amount_30d',       type: 'numeric', game: 'PTG', agg: 'SUM',     window: '30d rolling', users: '2.4M', last: '2h ago',  q: 'sum(usd_amount) FILTER …', owner: 'data.liveops' },
-  { id: 'f_churn_risk',     name: 'churn_risk_score',          type: 'numeric', game: 'PTG', agg: 'ML',      window: 'daily',       users: '2.4M', last: '32m ago', q: 'propensity_v4.predict …',  owner: 'ds.propensity' },
-  { id: 'f_avatar_tier',    name: 'avatar_cosmetic_tier',      type: 'string',  game: 'PTG', agg: 'LATEST',  window: 'realtime',    users: '2.4M', last: '1m ago',  q: 'last(tier) OVER …',       owner: 'data.liveops' },
-  { id: 'f_kd_30d',         name: 'kd_ratio_30d',              type: 'numeric', game: 'CFM', agg: 'AVG',     window: '30d rolling', users: '1.8M', last: '1h ago',  q: 'avg(kills/deaths) …',     owner: 'data.liveops' },
-  { id: 'f_weapon_pref',    name: 'preferred_weapon_class',    type: 'string',  game: 'CFM', agg: 'MODE',    window: '30d rolling', users: '1.8M', last: '2h ago',  q: 'mode(weapon_class) …',    owner: 'data.liveops' },
-  { id: 'f_rank_tier',      name: 'current_rank_tier',         type: 'string',  game: 'CFM', agg: 'LATEST',  window: 'realtime',    users: '1.8M', last: '1m ago',  q: 'last(rank_tier) OVER …',  owner: 'data.liveops' },
-  { id: 'f_matches_30d',    name: 'matches_played_30d',        type: 'numeric', game: 'TFB', agg: 'COUNT',   window: '30d rolling', users: '920K', last: '1h ago',  q: 'count(match_id) FILTER …', owner: 'data.liveops' },
-  { id: 'f_club_tier',      name: 'club_subscription_tier',    type: 'string',  game: 'TFB', agg: 'LATEST',  window: 'realtime',    users: '920K', last: '1m ago',  q: 'last(club_tier) OVER …',  owner: 'data.liveops' },
-  { id: 'f_propensity_pay', name: 'propensity_to_pay',         type: 'numeric', game: 'ALL', agg: 'ML',      window: 'daily',       users: '5.1M', last: '48m ago', q: 'propensity_v7.predict …', owner: 'ds.propensity' },
+  { id: 'f_sessions_7d',    name: 'sessions_last_7d',          type: 'numeric', game: 'PTG', agg: 'COUNT',   window: '7d rolling', users: '2.4M', last: '1h ago',  q: 'count(session_id) FILTER …', owner: 'data.liveops', metrics: ['m_sessions_7d', 'm_last_seen'], masterTable: 'master.session' },
+  { id: 'f_purchase_30d',   name: 'purchase_amount_30d',       type: 'numeric', game: 'PTG', agg: 'SUM',     window: '30d rolling', users: '2.4M', last: '2h ago',  q: 'sum(usd_amount) FILTER …', owner: 'data.liveops', metrics: ['m_spend_30d', 'm_first_purchase'], masterTable: 'master.transaction' },
+  { id: 'f_churn_risk',     name: 'churn_risk_score',          type: 'numeric', game: 'PTG', agg: 'ML',      window: 'daily',       users: '2.4M', last: '32m ago', q: 'propensity_v4.predict …',  owner: 'ds.propensity', metrics: ['m_churn_risk_ptg'], model: 'm_churn_ptg' },
+  { id: 'f_avatar_tier',    name: 'avatar_cosmetic_tier',      type: 'string',  game: 'PTG', agg: 'LATEST',  window: 'realtime',    users: '2.4M', last: '1m ago',  q: 'last(tier) OVER …',       owner: 'data.liveops', metrics: ['m_level'], masterTable: 'master.progression' },
+  { id: 'f_kd_30d',         name: 'kd_ratio_30d',              type: 'numeric', game: 'CFM', agg: 'AVG',     window: '30d rolling', users: '1.8M', last: '1h ago',  q: 'avg(kills/deaths) …',     owner: 'data.liveops', metrics: [], masterTable: 'master.session' },
+  { id: 'f_weapon_pref',    name: 'preferred_weapon_class',    type: 'string',  game: 'CFM', agg: 'MODE',    window: '30d rolling', users: '1.8M', last: '2h ago',  q: 'mode(weapon_class) …',    owner: 'data.liveops', metrics: [], masterTable: 'master.session' },
+  { id: 'f_rank_tier',      name: 'current_rank_tier',         type: 'string',  game: 'CFM', agg: 'LATEST',  window: 'realtime',    users: '1.8M', last: '1m ago',  q: 'last(rank_tier) OVER …',  owner: 'data.liveops', metrics: ['m_rank_tier'], masterTable: 'master.progression' },
+  { id: 'f_matches_30d',    name: 'matches_played_30d',        type: 'numeric', game: 'TFB', agg: 'COUNT',   window: '30d rolling', users: '920K', last: '1h ago',  q: 'count(match_id) FILTER …', owner: 'data.liveops', metrics: ['m_quests_7d'], masterTable: 'master.session' },
+  { id: 'f_club_tier',      name: 'club_subscription_tier',    type: 'string',  game: 'TFB', agg: 'LATEST',  window: 'realtime',    users: '920K', last: '1m ago',  q: 'last(club_tier) OVER …',  owner: 'data.liveops', metrics: ['m_club_up_tfb'], model: 'm_club_tfb' },
+  { id: 'f_propensity_pay', name: 'propensity_to_pay',         type: 'numeric', game: 'ALL', agg: 'ML',      window: 'daily',       users: '5.1M', last: '48m ago', q: 'propensity_v7.predict …', owner: 'ds.propensity', metrics: ['m_pay_prob_ptg'], model: 'm_pay_ptg' },
 ];
 
+// Model enrichment: features used as training signal.
 const MODELS = [
-  { id: 'm_churn_ptg',       name: 'PTG Churn v4',         target: 'Will churn in 14 days', game: 'PTG', auc: 0.872, samples: '2.4M', trained: '3h ago', status: 'production' },
-  { id: 'm_pay_ptg',         name: 'PTG Propensity to Pay v7', target: 'Will spend $5+ in 7d', game: 'PTG', auc: 0.814, samples: '2.4M', trained: '12h ago', status: 'production' },
-  { id: 'm_churn_cfm',       name: 'CFM Churn v2',         target: 'Will churn in 7 days',  game: 'CFM', auc: 0.841, samples: '1.8M', trained: '1d ago', status: 'production' },
-  { id: 'm_whale_cfm',       name: 'CFM Whale Propensity', target: 'Will spend $50+ in 30d',game: 'CFM', auc: 0.789, samples: '1.8M', trained: '6h ago', status: 'production' },
-  { id: 'm_club_tfb',        name: 'TFB Club Upgrade',     target: 'Will upgrade club tier',game: 'TFB', auc: 0.762, samples: '920K', trained: '18h ago', status: 'staging' },
-  { id: 'm_return_cfm',      name: 'CFM Reactivation',     target: 'Dormant will return',   game: 'CFM', auc: 0.704, samples: '340K', trained: '2h ago', status: 'training' },
+  { id: 'm_churn_ptg',       name: 'PTG Churn v4',         target: 'Will churn in 14 days', game: 'PTG', auc: 0.872, samples: '2.4M', trained: '3h ago', status: 'production', features: ['f_sessions_7d', 'f_purchase_30d', 'f_avatar_tier'] },
+  { id: 'm_pay_ptg',         name: 'PTG Propensity to Pay v7', target: 'Will spend $5+ in 7d', game: 'PTG', auc: 0.814, samples: '2.4M', trained: '12h ago', status: 'production', features: ['f_sessions_7d', 'f_purchase_30d'] },
+  { id: 'm_churn_cfm',       name: 'CFM Churn v2',         target: 'Will churn in 7 days',  game: 'CFM', auc: 0.841, samples: '1.8M', trained: '1d ago', status: 'production', features: ['f_kd_30d', 'f_rank_tier', 'f_weapon_pref'] },
+  { id: 'm_whale_cfm',       name: 'CFM Whale Propensity', target: 'Will spend $50+ in 30d',game: 'CFM', auc: 0.789, samples: '1.8M', trained: '6h ago', status: 'production', features: ['f_kd_30d', 'f_rank_tier'] },
+  { id: 'm_club_tfb',        name: 'TFB Club Upgrade',     target: 'Will upgrade club tier',game: 'TFB', auc: 0.762, samples: '920K', trained: '18h ago', status: 'staging',    features: ['f_matches_30d', 'f_club_tier'] },
+  { id: 'm_return_cfm',      name: 'CFM Reactivation',     target: 'Dormant will return',   game: 'CFM', auc: 0.704, samples: '340K', trained: '2h ago', status: 'training',   features: ['f_kd_30d'] },
 ];
 
+// Segment enrichment: filters is the list of upstream entities the segment
+// filters on. Each filter: { kind: 'feature'|'metric'|'model', ref, op, value }.
 const SEGMENTS = [
-  { id: 's_ptg_whales',    name: 'PTG High-Value at Risk', game: 'PTG', size: 18420,  sizeTrend: 'up',   delta: '+312', status: 'live',   owner: 'Khoi Tran',    updated: '2m ago',  campaigns: 3, desc: 'Top 5% spenders with rising churn risk' },
-  { id: 's_cfm_lapsed',    name: 'CFM Lapsed Mid-Core',    game: 'CFM', size: 84120,  sizeTrend: 'down', delta: '-1.2K',status: 'live',   owner: 'An Tran',      updated: '12m ago', campaigns: 2, desc: 'Rank Gold+ dormant 7-14 days' },
-  { id: 's_tfb_new_clubs', name: 'TFB New Club Upgrades',  game: 'TFB', size: 6204,   sizeTrend: 'up',   delta: '+184', status: 'live',   owner: 'Mai Nguyen',   updated: '18m ago', campaigns: 1, desc: 'Recently upgraded to Pro club tier' },
-  { id: 's_ptg_onboard',   name: 'PTG D1 Onboarding',      game: 'PTG', size: 42890,  sizeTrend: 'up',   delta: '+2.1K',status: 'live',   owner: 'Khoi Tran',    updated: '5m ago',  campaigns: 4, desc: 'New installs, hit tutorial step 3' },
-  { id: 's_cfm_whales',    name: 'CFM Active Whales',      game: 'CFM', size: 3120,   sizeTrend: 'flat', delta: '+8',   status: 'live',   owner: 'An Tran',      updated: '1h ago',  campaigns: 5, desc: '$50+ spend / 30d, active this week' },
-  { id: 's_ptg_cosmetic',  name: 'PTG Cosmetic Collectors',game: 'PTG', size: 22140,  sizeTrend: 'up',   delta: '+420', status: 'draft',  owner: 'Khoi Tran',    updated: 'Just now',campaigns: 0, desc: 'Own 20+ avatar items, no purchase 14d' },
-  { id: 's_tfb_weekend',   name: 'TFB Weekend Warriors',   game: 'TFB', size: 54210,  sizeTrend: 'up',   delta: '+3.4K',status: 'paused', owner: 'Mai Nguyen',   updated: '3h ago',  campaigns: 2, desc: 'Plays 10+ matches Sat/Sun only' },
+  { id: 's_ptg_whales',    name: 'PTG High-Value at Risk', game: 'PTG', size: 18420,  sizeTrend: 'up',   delta: '+312', status: 'live',   owner: 'Khoi Tran',    updated: '2m ago',  campaigns: 3, desc: 'Top 5% spenders with rising churn risk',
+    filters: [{ kind: 'feature', ref: 'f_purchase_30d', op: '>=', value: '50 USD' }, { kind: 'feature', ref: 'f_churn_risk', op: '>=', value: '0.6' }] },
+  { id: 's_cfm_lapsed',    name: 'CFM Lapsed Mid-Core',    game: 'CFM', size: 84120,  sizeTrend: 'down', delta: '-1.2K',status: 'live',   owner: 'An Tran',      updated: '12m ago', campaigns: 2, desc: 'Rank Gold+ dormant 7-14 days',
+    filters: [{ kind: 'feature', ref: 'f_rank_tier', op: 'in', value: 'Gold+' }, { kind: 'metric', ref: 'm_dormant_days', op: 'between', value: '7..14' }] },
+  { id: 's_tfb_new_clubs', name: 'TFB New Club Upgrades',  game: 'TFB', size: 6204,   sizeTrend: 'up',   delta: '+184', status: 'live',   owner: 'Mai Nguyen',   updated: '18m ago', campaigns: 1, desc: 'Recently upgraded to Pro club tier',
+    filters: [{ kind: 'feature', ref: 'f_club_tier', op: '=', value: 'Pro' }] },
+  { id: 's_ptg_onboard',   name: 'PTG D1 Onboarding',      game: 'PTG', size: 42890,  sizeTrend: 'up',   delta: '+2.1K',status: 'live',   owner: 'Khoi Tran',    updated: '5m ago',  campaigns: 4, desc: 'New installs, hit tutorial step 3',
+    filters: [{ kind: 'feature', ref: 'f_sessions_7d', op: '>=', value: '1' }, { kind: 'metric', ref: 'm_d1_retained', op: '=', value: '1' }] },
+  { id: 's_cfm_whales',    name: 'CFM Active Whales',      game: 'CFM', size: 3120,   sizeTrend: 'flat', delta: '+8',   status: 'live',   owner: 'An Tran',      updated: '1h ago',  campaigns: 5, desc: '$50+ spend / 30d, active this week',
+    filters: [{ kind: 'metric', ref: 'm_spend_30d', op: '>=', value: '50 USD' }, { kind: 'feature', ref: 'f_kd_30d', op: '>=', value: '1.2' }] },
+  { id: 's_ptg_cosmetic',  name: 'PTG Cosmetic Collectors',game: 'PTG', size: 22140,  sizeTrend: 'up',   delta: '+420', status: 'draft',  owner: 'Khoi Tran',    updated: 'Just now',campaigns: 0, desc: 'Own 20+ avatar items, no purchase 14d',
+    filters: [{ kind: 'feature', ref: 'f_avatar_tier', op: '>=', value: 'T3' }] },
+  { id: 's_tfb_weekend',   name: 'TFB Weekend Warriors',   game: 'TFB', size: 54210,  sizeTrend: 'up',   delta: '+3.4K',status: 'paused', owner: 'Mai Nguyen',   updated: '3h ago',  campaigns: 2, desc: 'Plays 10+ matches Sat/Sun only',
+    filters: [{ kind: 'feature', ref: 'f_matches_30d', op: '>=', value: '10' }] },
 ];
 
 const CAMPAIGNS = [

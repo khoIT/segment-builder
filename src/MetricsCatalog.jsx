@@ -1,6 +1,7 @@
 import React from 'react';
 import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
 import { BR_METRICS, BR_METRIC_CATEGORIES } from './bedrockData.jsx';
+import { LineageDrawer } from './LineageDrawer.jsx';
 
 /* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline, BR_METRICS, BR_METRIC_CATEGORIES */
 
@@ -136,16 +137,18 @@ function NewMetricModal({ onClose }) {
   );
 }
 
-function MetricCard({ m }) {
+function MetricCard({ m, onOpenLineage }) {
   const cat = BR_METRIC_CATEGORIES.find(c => c.id === m.category);
   return (
-    <div style={{
-      padding: 14, borderRadius: 10, background: '#fff', border: `1px solid ${T.n200}`,
-      display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer',
-      transition: 'border-color 0.15s, transform 0.15s',
-    }}
-    onMouseEnter={e => { e.currentTarget.style.borderColor = cat.color; }}
-    onMouseLeave={e => { e.currentTarget.style.borderColor = T.n200; }}>
+    <div
+      onClick={onOpenLineage}
+      style={{
+        padding: 14, borderRadius: 10, background: '#fff', border: `1px solid ${T.n200}`,
+        display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer',
+        transition: 'border-color 0.15s, transform 0.15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = cat.color; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = T.n200; }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 7, flexShrink: 0,
@@ -201,6 +204,8 @@ function MetricsCatalog() {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [showNew, setShowNew] = React.useState(false);
+  // undefined = drawer closed; null = open with picker; metric object = open with that metric
+  const [lineage, setLineage] = React.useState(undefined);
   useLucide(category + search + realtimeOnly + statusFilter + typeFilter);
 
   const byCat = BR_METRIC_CATEGORIES.map(c => ({
@@ -223,7 +228,7 @@ function MetricsCatalog() {
         title="Metrics catalog"
         description="Every metric available to segments, models, and dashboards — standard, custom, and ML-derived. Categorized for discovery; realtime-capable metrics are flagged for use in streaming segments."
         right={<>
-          <Button variant="outline" size="sm" leftIcon="git-compare">Lineage</Button>
+          <Button variant="outline" size="sm" leftIcon="git-compare" onClick={() => setLineage(null)}>Lineage</Button>
           <Button variant="primary" size="sm" leftIcon="plus" onClick={() => setShowNew(true)}>New custom metric</Button>
         </>} />
 
@@ -293,7 +298,7 @@ function MetricsCatalog() {
             <span style={{ fontSize: 11, color: T.n500, fontFamily: T.fMono }}>{filtered.length} / {BR_METRICS.length}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
-            {filtered.map(m => <MetricCard key={m.id + m.games.join('')} m={m} />)}
+            {filtered.map(m => <MetricCard key={m.id + m.games.join('')} m={m} onOpenLineage={() => setLineage(m)} />)}
             {filtered.length === 0 && (
               <div style={{ gridColumn: '1 / -1', padding: 40, textAlign: 'center', color: T.n500, fontSize: 12 }}>
                 <Icon name="search-x" size={24} color={T.n300} />
@@ -305,6 +310,12 @@ function MetricsCatalog() {
       </div>
 
       {showNew && <NewMetricModal onClose={() => setShowNew(false)} />}
+      {lineage !== undefined && (
+        <LineageDrawer
+          seed={lineage ? { kind: 'metric', entity: lineage } : null}
+          onClose={() => setLineage(undefined)}
+        />
+      )}
     </div>
   );
 }

@@ -154,9 +154,22 @@ const BR_METRIC_CATEGORIES = [
   { id: 'propensity',   label: 'ML · Propensity',icon: 'sparkles',  color: '#a855f7', desc: 'Model scores — churn, pay, whale, return' },
 ];
 
+// Per-category default source + master table. Individual metrics may
+// override either field explicitly; the .map() below spreads the default
+// first so an explicit `source` / `masterTable` on the metric wins.
+const METRIC_CATEGORY_SOURCES = {
+  engagement:   { source: 'kafka.session_events',     masterTable: 'master.session' },
+  monetization: { source: 'kafka.purchase_events',    masterTable: 'master.transaction' },
+  progression:  { source: 'kafka.progression_events', masterTable: 'master.progression' },
+  retention:    { source: 'master.session',           masterTable: 'master.user_day' },
+  social:       { source: 'kafka.social_events',      masterTable: 'master.social_graph' },
+  technical:    { source: 'kafka.telemetry',          masterTable: 'master.device' },
+  propensity:   { source: 'ml.feature_store',         masterTable: 'ml.scores' },
+};
+
 // Metric record: type = standard | custom | propensity
 //                realtime = true if it can be computed on the streaming path (for realtime segments)
-const BR_METRICS = [
+const BR_METRICS_RAW = [
   // Engagement
   { id: 'm_sessions_7d',     name: 'sessions_last_7d',          category: 'engagement',  type: 'standard',   status: 'certified',   owner: 'data.liveops',  games: ['ALL'], window: '7d rolling',  unit: 'count',    freq: 'hourly',  realtime: true,  usedBy: 42, formula: 'COUNT(DISTINCT session_id) OVER 7d' },
   { id: 'm_sessions_30d',    name: 'sessions_last_30d',         category: 'engagement',  type: 'standard',   status: 'certified',   owner: 'data.liveops',  games: ['ALL'], window: '30d rolling', unit: 'count',    freq: 'daily',   realtime: false, usedBy: 38, formula: 'COUNT(DISTINCT session_id) OVER 30d' },
@@ -190,6 +203,23 @@ const BR_METRICS = [
   { id: 'm_return_prob_cfm', name: 'reactivation_propensity',   category: 'propensity',  type: 'propensity', status: 'experimental',owner: 'ds.propensity', games: ['CFM'], window: 'daily',       unit: 'prob',     freq: 'daily',   realtime: false, usedBy: 7,  formula: 'model cfm_return_v1(features)', model: 'CFM Reactivation v1' },
   { id: 'm_club_up_tfb',     name: 'club_upgrade_propensity',   category: 'propensity',  type: 'propensity', status: 'experimental',owner: 'ds.propensity', games: ['TFB'], window: 'daily',       unit: 'prob',     freq: 'daily',   realtime: false, usedBy: 4,  formula: 'model tfb_club_v1(features)', model: 'TFB Club v1' },
 ];
+
+// Per-metric explicit overrides of source/masterTable. Any metric listed
+// here wins over the category default. Add entries when a metric truly
+// comes from a non-canonical source (e.g. derived metrics, raw overrides).
+const METRIC_SOURCE_OVERRIDES = {
+  m_arpdau_7d:      { source: 'derived.metrics',       masterTable: 'master.transaction' }, // computed from other metrics
+  m_d1_retained:    { source: 'derived.cohorts',       masterTable: 'master.user_day' },
+  m_dormant_days:   { source: 'kafka.session_events',  masterTable: 'master.session' },
+};
+
+// Resolve source/masterTable for every metric. Precedence (later wins):
+//   category default → inline on metric → explicit override by id.
+const BR_METRICS = BR_METRICS_RAW.map(m => ({
+  ...METRIC_CATEGORY_SOURCES[m.category],
+  ...m,
+  ...METRIC_SOURCE_OVERRIDES[m.id],
+}));
 
 // Freshness / SLA table — per master table + metric
 const BR_FRESHNESS = [
