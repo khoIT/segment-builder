@@ -90,6 +90,18 @@ This ensures packages installed by `install.sh` (google-genai, pypdf, etc.) are 
 
 **IMPORTANT:** When scripts of skills failed, don't stop, try to fix them directly.
 
+## [IMPORTANT] Post-implementation reflex (MANDATORY)
+
+After shipping any feature, fix, or refactor — even small ones — **always** close the response with:
+
+1. **What still needs real data later** (if applicable) — any places where mocks, inference, or placeholder values were used and could later be replaced with real refs/fields/APIs.
+2. **Unresolved** — open design/UX questions you had to pick a default for without asking, and optional extensions you deliberately did not pursue.
+3. **Next-iteration suggestions** — 2–4 concrete proposals ranked by product impact. For each, state the main tradeoff in one line (cost vs. value, or what it enables vs. what it complicates).
+
+Treat these as part of the deliverable, not as conversation. The goal is to hand the user a running backlog they can pull from without asking "what's next?". Keep each item tight — one sentence or a short bullet. Do not pad.
+
+When nothing is genuinely unresolved or worth proposing, say so explicitly rather than inventing filler.
+
 ## [IMPORTANT] Consider Modularization
 - If a code file exceeds 200 lines of code, consider modularizing it
 - Check existing modules before creating new
