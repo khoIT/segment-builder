@@ -590,7 +590,7 @@ export default function App() {
       case 'sources':    return <Sources />;
       case 'mapping':    return <MappingStudio />;
       case 'master':     return <MasterTables />;
-      case 'metrics':    return <MetricsCatalog />;
+      case 'metrics':    return <MetricsCatalog setPage={setPage} />;
       case 'freshness':  return <FreshnessSLAs />;
       case 'explorer':   return <RawExplorer />;
       case 'features':   return <FeatureBuilder />;

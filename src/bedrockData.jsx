@@ -1,5 +1,6 @@
 // Extended mock data for Bedrock (ES module)
 // Extended mock data for Bedrock: sources, mappings, master tables, metrics, SLAs
+import { topGroupForCategory, goodDirFor } from './metrics-mock-series.jsx';
 
 // ─── Data sources (connectors) — batch + realtime ────────────────
 const BR_SOURCES = [
@@ -215,11 +216,20 @@ const METRIC_SOURCE_OVERRIDES = {
 
 // Resolve source/masterTable for every metric. Precedence (later wins):
 //   category default → inline on metric → explicit override by id.
-const BR_METRICS = BR_METRICS_RAW.map(m => ({
-  ...METRIC_CATEGORY_SOURCES[m.category],
-  ...m,
-  ...METRIC_SOURCE_OVERRIDES[m.id],
-}));
+// Then enrich with `topGroup` (filter pill bucket) and `goodDir` (whether
+// positive deltas should render green or red).
+const BR_METRICS = BR_METRICS_RAW.map(m => {
+  const merged = {
+    ...METRIC_CATEGORY_SOURCES[m.category],
+    ...m,
+    ...METRIC_SOURCE_OVERRIDES[m.id],
+  };
+  return {
+    ...merged,
+    topGroup: topGroupForCategory(merged.category),
+    goodDir: goodDirFor(merged),
+  };
+});
 
 // Freshness / SLA table — per master table + metric
 const BR_FRESHNESS = [
