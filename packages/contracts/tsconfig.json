@@ -1,6 +1,8 @@
 {
   "extends": "@bedrock/tsconfig/node.json",
   "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "rootDir": "src",
     "outDir": "dist"
   },
