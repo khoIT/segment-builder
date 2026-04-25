@@ -1,0 +1,4 @@
+# JSONL samples are local-only — they may carry PII before the
+# refresh script's hashing pass catches everything. Schemas (.schema.json)
+# are committed.
+*.jsonl

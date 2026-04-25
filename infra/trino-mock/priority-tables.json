@@ -1,0 +1,14 @@
+{
+  "_comment": "Tables refresh-mocks pulls schema + sample rows from. One key per Trino schema.",
+  "cfm_vn": [
+    "etl_login",
+    "etl_logout",
+    "etl_recharge",
+    "etl_moneyflow",
+    "etl_game_detail",
+    "etl_match_net_work_stats",
+    "etl_appsflyer_installs_datalocker",
+    "etl_new_register",
+    "std_master_user_profile"
+  ]
+}
