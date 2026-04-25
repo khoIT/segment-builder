@@ -7,6 +7,7 @@ import { CatalogClient } from '../catalog-client/catalog-client.service';
 import { QUERY_DRIVER } from '../driver/driver.interface';
 import type { QueryDriver, MetricMeta } from '../driver/driver.interface';
 import { MappingExecutor } from '../mapping-executor/mapping-executor';
+import { SegmentCounter, type SegmentCriteria } from '../segment-counter/segment-counter';
 import { MappingSpec } from '@bedrock/contracts';
 
 // One controller for the whole query surface. Endpoints are independent
@@ -20,6 +21,7 @@ export class QueryController {
     @Inject(QUERY_DRIVER) private readonly driver: QueryDriver,
     private readonly catalog: CatalogClient,
     private readonly executor: MappingExecutor,
+    private readonly segmentCounter: SegmentCounter,
   ) {}
 
   // ── Series + sparkline ─────────────────────────────────────────
@@ -67,12 +69,23 @@ export class QueryController {
   }
 
   // ── Segment count + preview ────────────────────────────────────
+  // M2: dispatch on criteria shape. New `{ all: [...]|any: [...] }`
+  // form runs against materialized metric_<id>_values via SegmentCounter.
+  // Legacy game-based criteria still falls through to the driver.
   @Post('segments/preview-count')
   async previewCount(
-    @Body() body: { criteria: Record<string, unknown>; game: string },
+    @Body() body: { criteria: Record<string, unknown>; game?: string },
   ) {
-    if (!body.criteria || !body.game) {
-      throw new HttpException({ code: 'BAD_REQUEST', message: 'criteria + game required' }, HttpStatus.BAD_REQUEST);
+    if (!body.criteria) {
+      throw new HttpException({ code: 'BAD_REQUEST', message: 'criteria required' }, HttpStatus.BAD_REQUEST);
+    }
+    const c = body.criteria as Record<string, unknown>;
+    if (Array.isArray(c.all) || Array.isArray(c.any)) {
+      const result = await this.segmentCounter.count(c as SegmentCriteria);
+      return result;
+    }
+    if (!body.game) {
+      throw new HttpException({ code: 'BAD_REQUEST', message: 'legacy criteria requires game' }, HttpStatus.BAD_REQUEST);
     }
     return this.driver.countSegment({
       criteria: body.criteria as never,

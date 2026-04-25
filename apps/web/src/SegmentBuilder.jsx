@@ -4,6 +4,7 @@ import { useHashState } from './routing/hash-state.js';
 import { FilterBanner } from './routing/filter-banner.jsx';
 import { GAMES, SEGMENTS, FEATURES, SEGMENT_SERIES } from './data.jsx';
 import { BR_METRICS, BR_METRIC_CATEGORIES } from './bedrockData.jsx';
+import { useSegmentMetricCatalog, usePreviewSegmentCount } from './api/hooks.js';
 
 /* global React, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline, GAMES, FEATURES, SEGMENT_SERIES, SEGMENTS, BR_METRICS, BR_METRIC_CATEGORIES */
 
@@ -121,15 +122,24 @@ const ScheduleModeContext = React.createContext('scheduled');
 function FilterNodeBody({ node, onUpdate }) {
   const scheduleMode = React.useContext(ScheduleModeContext);
   const isLive = scheduleMode === 'live';
+  const liveCatalog = useSegmentMetricCatalog().data ?? [];
+  // Merge live registry with mock; live wins by name. Lets us survive
+  // pre-API mode without breaking the prototype's curated list.
+  const merged = React.useMemo(() => {
+    const byName = new Map();
+    for (const m of BR_METRICS) byName.set(m.name, m);
+    for (const m of liveCatalog) byName.set(m.name, { ...byName.get(m.name), ...m });
+    return Array.from(byName.values());
+  }, [liveCatalog]);
   const seen = new Set();
-  const available = BR_METRICS.filter(m => {
+  const available = merged.filter(m => {
     if (isLive && !m.realtime) return false;
     if (seen.has(m.name)) return false;
     seen.add(m.name);
     return true;
   });
   const feats = available.map(f => ({ value: f.name, label: f.name }));
-  const currentMetric = BR_METRICS.find(m => m.name === node.feature);
+  const currentMetric = merged.find(m => m.name === node.feature);
   const incompatible = isLive && currentMetric && !currentMetric.realtime;
   return (
     <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -262,6 +272,80 @@ function Port({ node, side, onStartWire, onFinishWire, wireDragFrom }) {
   );
 }
 
+// New FilterEditor with live registry + real /q/segments/preview-count.
+// One filter at a time per node — segment-level rollup happens in the
+// canvas's overall preview (M2's preview-count endpoint).
+function FilterEditor({ node, onUpdate, onDelete }) {
+  const liveCatalog = useSegmentMetricCatalog().data ?? [];
+  const merged = React.useMemo(() => {
+    const byName = new Map();
+    for (const m of BR_METRICS) byName.set(m.name, m);
+    for (const m of liveCatalog) byName.set(m.name, { ...byName.get(m.name), ...m });
+    return Array.from(byName.values());
+  }, [liveCatalog]);
+  const preview = usePreviewSegmentCount();
+  const [count, setCount] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!node?.feature || node.value === '' || node.value == null) return;
+    const handle = setTimeout(() => {
+      preview.mutate({
+        criteria: { all: [{ metric: node.feature, op: node.op, value: parseFloat(node.value) || node.value }] },
+      }, {
+        onSuccess: (d) => setCount(d?.count ?? null),
+        onError: () => setCount(null),
+      });
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [node?.feature, node?.op, node?.value]);
+
+  return (
+    <>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: T.n500, marginBottom: 4 }}>Metric</div>
+        <Select
+          size="sm"
+          value={node.feature}
+          onChange={(e) => {
+            const m = merged.find((x) => x.name === e.target.value);
+            onUpdate(node.id, { feature: e.target.value, label: e.target.value, unit: m?.unit ?? node.unit });
+          }}
+          options={merged.map((m) => ({ value: m.name, label: m.name + (m.realtime ? '  ⚡' : '') }))}
+          style={{ width: '100%' }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: T.n500, marginBottom: 4 }}>Operator</div>
+          <Select
+            size="sm"
+            value={node.op}
+            onChange={(e) => onUpdate(node.id, { op: e.target.value })}
+            options={[{ value: '>=', label: '≥' }, { value: '<=', label: '≤' }, { value: '=', label: '=' }, { value: '!=', label: '≠' }]}
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, color: T.n500, marginBottom: 4 }}>Value</div>
+          <Input size="sm" value={node.value} onChange={(e) => onUpdate(node.id, { value: e.target.value })} />
+        </div>
+      </div>
+      <div style={{ padding: 12, borderRadius: 8, background: T.brandSoft, border: `1px solid ${T.brandBorder}`, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Icon name="users" size={12} color={T.brand} />
+          <span style={{ fontFamily: T.fMono, fontSize: 13, fontWeight: 600, color: T.brand }}>
+            {preview.isPending ? 'computing…' : count != null ? Number(count).toLocaleString() : (node.matches ?? '—')}
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: '#7c2d12' }}>
+          {count != null ? 'players match this filter (live)' : 'live count unavailable; showing mock'}
+        </div>
+      </div>
+      <Button variant="ghost" size="sm" leftIcon="trash-2" onClick={() => onDelete(node.id)} style={{ color: T.red600, width: '100%' }}>Delete block</Button>
+    </>
+  );
+}
+
 function PropertiesPanel({ graph, selected, onUpdate, onDelete }) {
   const node = selected && graph.nodes[selected];
   return (
@@ -301,6 +385,9 @@ WHERE game = 'PTG'
         </>
       )}
       {node && node.kind === 'filter' && (
+        <FilterEditor node={node} onUpdate={onUpdate} onDelete={onDelete} />
+      )}
+      {false && node && node.kind === 'filter' && (
         <>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: T.n500, marginBottom: 4 }}>Feature</div>

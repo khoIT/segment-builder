@@ -4,10 +4,22 @@ import {
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { BedrockClaims } from '../auth/auth.service';
 import { SegmentsService } from './segments.service';
+import { SchedulerService } from '../scheduler/scheduler.service';
 
 @Controller('segments')
 export class SegmentsController {
-  constructor(private readonly svc: SegmentsService) {}
+  constructor(
+    private readonly svc: SegmentsService,
+    private readonly scheduler: SchedulerService,
+  ) {}
+
+  // Trigger an immediate nightly-style recompute of every segment with
+  // {all|any} criteria. Useful for ops + the demo.
+  @Post('recompute')
+  async recompute() {
+    const jobId = await this.scheduler.runRecomputeNow();
+    return { jobId };
+  }
 
   @Get()
   async list(
