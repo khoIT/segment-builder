@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,12 +12,18 @@
 
 # testing
 /coverage
+**/coverage
 
 # next.js
 /.next/
 /out/
 dist/
+**/dist/
 bin/
+
+# turbo
+.turbo
+**/.turbo
 
 # production
 /build
@@ -48,10 +54,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# package manager
+# package manager — pnpm-lock.yaml is committed in monorepo
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
+# pnpm-lock.yaml committed for reproducible installs across the monorepo
 
 # semantic-release
 .nyc_output
