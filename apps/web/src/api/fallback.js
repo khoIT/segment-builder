@@ -26,10 +26,30 @@ export function listFreshnessFallback() {
 }
 
 export function listMasterTablesFallback() {
-  // Mock JSX uses an array of POJOs without IDs; synthesise IDs so
-  // the live shape matches.
+  // Project mock shape (rows='4.12B', cols, slaMet, streams, …) into the
+  // live API shape (id, name, gameId, templateId, status, rowCount,
+  // lastBuildAt). Mock counts are display strings — strip the suffix and
+  // multiply so a `rowCount: number` is sensible for KPI math.
+  const parseRows = (s) => {
+    if (typeof s !== 'string') return Number(s) || 0;
+    const m = s.match(/([\d.]+)\s*([BMK]?)/i);
+    if (!m) return 0;
+    const [, num, mult] = m;
+    const scale = mult.toUpperCase() === 'B' ? 1e9 : mult.toUpperCase() === 'M' ? 1e6 : mult.toUpperCase() === 'K' ? 1e3 : 1;
+    return Math.round(parseFloat(num) * scale);
+  };
   return {
-    items: BR_MASTER_TABLES.map((m, i) => ({ ...m, id: `mt_${i}` })),
+    items: BR_MASTER_TABLES.map((m, i) => ({
+      id: `mt_${i}`,
+      name: m.name,
+      gameId: (m.game ?? '').toLowerCase(),
+      templateId: 'tpl_user_profile_dx',
+      status: 'completed',
+      rowCount: parseRows(m.rows),
+      lastBuildAt: new Date(Date.now() - (i + 1) * 600_000).toISOString(),
+      lastBuildMs: 120_000,
+      columns: null,
+    })),
     total: BR_MASTER_TABLES.length,
   };
 }

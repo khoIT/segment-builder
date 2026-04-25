@@ -1,183 +1,244 @@
 import React from 'react';
-import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Tabs, Kpi, SectionHeader } from './theme.jsx';
-import { TABLES } from './data.jsx';
-import { BR_MASTER_TABLES, BR_RAW_LOGS, BR_STANDARD_LOGS } from './bedrockData.jsx';
+import { T, Icon, useLucide, Button, Badge, Card, Tabs, Kpi, SectionHeader } from './theme.jsx';
+import {
+  useMasterTables, useMasterTablePreview, useBuildMasterTable, useBuildJobStatus,
+} from './api/hooks.js';
 
-/* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Tabs, Kpi, SectionHeader, BR_MASTER_TABLES, BR_RAW_LOGS, BR_STANDARD_LOGS */
+/* global React, T, Icon, useLucide, Button, Badge, Card, Tabs, Kpi, SectionHeader */
 
 // ═══════════════════════════════════════════════════════════════════════
-// MASTER TABLES — the standardized per-game output of mapping
-// With a raw ↔ standard toggle to show what's underneath any master table
+// MASTER TABLES — live shape: name | game | template | status | rowCount |
+// lastBuild + [Build] button + preview drawer.
+//
+// Triggers POST /master-tables/:id/build → polls /:id/build/:jobId every
+// 1.5s via useBuildJobStatus until status leaves running/pending. Click a
+// row to open the preview drawer (first 50 rows from the per-template
+// physical Postgres table). Mock fallback shows the same UI minus the
+// Build button (no orchestrator without a backend).
 // ═══════════════════════════════════════════════════════════════════════
+
+const STATUS_META = {
+  never_built: { variant: 'secondary', label: 'never built' },
+  building:    { variant: 'warning',   label: 'building' },
+  completed:   { variant: 'live',      label: 'completed', dot: true },
+  failed:      { variant: 'destructive',label: 'failed',    dot: true },
+};
+
+function fmtCount(n) {
+  if (n == null) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function fmtTime(iso) {
+  if (!iso) return 'never';
+  const d = new Date(iso);
+  const ms = Date.now() - d.getTime();
+  if (ms < 60_000) return 'just now';
+  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h ago`;
+  return d.toISOString().slice(0, 10);
+}
 
 function MasterTables() {
   const [game, setGame] = React.useState('all');
-  const [selectedIdx, setSelectedIdx] = React.useState(0);
-  const [viewMode, setViewMode] = React.useState('standard'); // standard | raw
-  useLucide(selectedIdx + viewMode);
+  const [drawerId, setDrawerId] = React.useState(null);
+  // Active build jobs, keyed by master_table id.
+  const [jobs, setJobs] = React.useState({});
+  useLucide(drawerId);
 
-  const filtered = BR_MASTER_TABLES.filter(t => game === 'all' || t.game === game);
-  const selected = filtered[selectedIdx] || filtered[0];
+  const listQ = useMasterTables();
+  const buildMut = useBuildMasterTable();
 
-  // Map the selected master table to a sample key in BR_RAW_LOGS
-  const sampleKey = (() => {
-    if (!selected) return 'moneyflow_ptg';
-    if (selected.name.includes('purchase')) return 'recharge_ptg';
-    if (selected.name.includes('currency')) return 'moneyflow_ptg';
-    return 'login_logout_ptg';
-  })();
+  const all = listQ.data?.items ?? [];
+  const filtered = all.filter(t => game === 'all' || (t.game ?? t.gameId)?.toLowerCase() === game.toLowerCase());
 
-  const rawSample = BR_RAW_LOGS[sampleKey];
-  const stdSample = BR_STANDARD_LOGS[sampleKey];
-  const sampleToShow = viewMode === 'raw' ? rawSample : stdSample;
+  const total = all.length;
+  const built = all.filter(t => t.status === 'completed').length;
+  const totalRows = all.reduce((acc, t) => acc + (t.rowCount ?? 0), 0);
+  const failed = all.filter(t => t.status === 'failed').length;
+
+  function startBuild(id) {
+    buildMut.mutate(id, {
+      onSuccess: (data) => {
+        setJobs(prev => ({ ...prev, [id]: data.jobId }));
+      },
+      onError: (err) => {
+        // eslint-disable-next-line no-console
+        console.error('[build] failed to start', err);
+      },
+    });
+  }
 
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'auto', background: T.n50 }}>
       <SectionHeader eyebrow="Catalog · Master Tables"
-        title="Standardized tables"
-        description="The canonical, game-agnostic schema every downstream consumer reads from. Each master table is produced by one or more mappings; structure is stable across versions."
+        title="Master tables"
+        description="Per-template wide tables built from raw Trino data via a saved Mapping. Click Build to materialise rows into Postgres; click a row to preview them."
         right={<>
-          <Button variant="outline" size="sm" leftIcon="download">Export DDL</Button>
-          <Button variant="outline" size="sm" leftIcon="git-compare">Compare versions</Button>
+          <Button variant="outline" size="sm" leftIcon="refresh-cw" onClick={() => listQ.refetch()}>Refresh</Button>
+          <Button variant="outline" size="sm" leftIcon="git-compare">Compare</Button>
         </>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <Kpi label="Master tables" value={BR_MASTER_TABLES.length} sub="across 3 games" icon="table-2" />
-        <Kpi label="Avg coverage" value="98.4%" sub="non-null required fields" icon="check-circle-2" />
-        <Kpi label="SLA met" value={`${BR_MASTER_TABLES.filter(t => t.slaMet).length}/${BR_MASTER_TABLES.length}`} sub="last 24h" icon="timer" />
-        <Kpi label="Live streaming" value={BR_MASTER_TABLES.filter(t => t.streams.includes('realtime')).length} sub="dual-path tables" icon="zap" />
+        <Kpi label="Master tables" value={total} sub={`${built} built · ${total - built} pending`} icon="table-2" />
+        <Kpi label="Total rows" value={fmtCount(totalRows)} sub="across all built tables" icon="rows" />
+        <Kpi label="Failed builds" value={failed} sub={failed === 0 ? 'all green' : 'needs attention'} icon="alert-triangle" />
+        <Kpi label="Templates" value={new Set(all.map(t => t.templateId)).size} sub="distinct shapes" icon="layers" />
       </div>
 
-      {/* Table list */}
       <Card padding={0}>
         <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900 }}>All master tables</span>
           <Badge variant="secondary">{filtered.length}</Badge>
           <div style={{ flex: 1 }} />
-          <Tabs value={game} onChange={g => { setGame(g); setSelectedIdx(0); }} tabs={[
+          <Tabs value={game} onChange={setGame} tabs={[
             { value: 'all', label: 'All games' },
-            { value: 'PTG', label: 'PTG' },
-            { value: 'CFM', label: 'CFM' },
-            { value: 'TFB', label: 'TFB' },
+            { value: 'ptg', label: 'PTG' },
+            { value: 'cfm', label: 'CFM' },
+            { value: 'tfb', label: 'TFB' },
           ]} />
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: T.fSans, fontSize: 12 }}>
           <thead>
             <tr style={{ background: T.n50 }}>
-              {['Table', 'Game', 'Rows', 'Cols', 'Coverage', 'Streams', 'SLA', 'Last build', ''].map(h => (
+              {['Name', 'Game', 'Template', 'Status', 'Rows', 'Last build', 'Build', 'Preview'].map(h => (
                 <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontWeight: 600, color: T.n600, fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase', borderBottom: `1px solid ${T.n200}` }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((t, i) => {
-              const active = i === selectedIdx;
+            {filtered.map(t => {
+              const meta = STATUS_META[t.status] ?? STATUS_META.never_built;
+              const activeJob = jobs[t.id];
               return (
-                <tr key={i} onClick={() => setSelectedIdx(i)} style={{
-                  borderBottom: `1px solid ${T.n100}`, cursor: 'pointer',
-                  background: active ? T.brandSoft : 'transparent',
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.n50; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Icon name="table-2" size={14} color={active ? T.brand : T.n500} />
-                      <span style={{ fontFamily: T.fMono, fontSize: 12, fontWeight: 600, color: active ? T.brand : T.n900 }}>{t.name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}><Badge variant="info">{t.game}</Badge></td>
-                  <td style={{ padding: '12px 16px', fontFamily: T.fMono, color: T.n700 }}>{t.rows}</td>
-                  <td style={{ padding: '12px 16px', fontFamily: T.fMono, color: T.n700 }}>{t.cols}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 44, height: 4, background: T.n200, borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ width: `${t.coverage}%`, height: '100%', background: t.coverage >= 98 ? T.green600 : t.coverage >= 95 ? T.amber500 : T.red600 }} />
-                      </div>
-                      <span style={{ fontFamily: T.fMono, fontSize: 11, color: T.n700 }}>{t.coverage}%</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {t.streams.includes('batch') && <Badge variant="secondary" leftIcon="calendar">B</Badge>}
-                      {t.streams.includes('realtime') && <Badge variant="brandSoft" leftIcon="zap">RT</Badge>}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <Badge variant={t.slaMet ? 'success' : 'destructive'} dot>{t.sla}</Badge>
-                  </td>
-                  <td style={{ padding: '12px 16px', color: T.n500 }}>{t.lastBuild}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <Icon name="chevron-right" size={13} color={active ? T.brand : T.n400} />
-                  </td>
-                </tr>
+                <MasterTableRow key={t.id ?? t.name}
+                  row={t} meta={meta} activeJob={activeJob}
+                  onBuild={() => startBuild(t.id)}
+                  onPreview={() => setDrawerId(t.id)}
+                  buildPending={buildMut.isPending}
+                />
               );
             })}
+            {filtered.length === 0 && (
+              <tr><td colSpan={8} style={{ padding: '32px 16px', textAlign: 'center', color: T.n500 }}>
+                {listQ.isLoading ? 'Loading…' : 'No master tables yet. Save a mapping in Mapping Studio first.'}
+              </td></tr>
+            )}
           </tbody>
         </table>
       </Card>
 
-      {/* Detail view — raw ↔ standard toggle */}
-      <Card padding={0}>
-        <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Icon name="layers" size={14} color={T.brand} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: T.n900, fontFamily: T.fMono }}>{selected?.name}</span>
-          <Badge variant="info">{selected?.game}</Badge>
-          <Badge variant="secondary">{selected?.cols} fields</Badge>
-          <div style={{ flex: 1 }} />
-          <div style={{ fontSize: 11, color: T.n500, marginRight: 6 }}>View as:</div>
-          <div style={{ display: 'inline-flex', background: T.n100, borderRadius: 8, padding: 3 }}>
-            {[
-              { v: 'raw',      l: 'Raw logs',        desc: 'Source fields', color: '#b45309', bg: '#fef3c7' },
-              { v: 'standard', l: 'Standard schema', desc: 'Mapped output', color: T.green600, bg: '#ecfdf5' },
-            ].map(o => {
-              const a = viewMode === o.v;
-              return (
-                <div key={o.v} onClick={() => setViewMode(o.v)} style={{
-                  padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                  background: a ? '#fff' : 'transparent', color: a ? o.color : T.n600,
-                  boxShadow: a ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                }}>{o.l}</div>
-              );
-            })}
+      {drawerId && <PreviewDrawer id={drawerId} onClose={() => setDrawerId(null)} />}
+    </div>
+  );
+}
+
+function MasterTableRow({ row, meta, activeJob, onBuild, onPreview, buildPending }) {
+  // Subscribe to job status only when there's an active jobId.
+  const jobQ = useBuildJobStatus(row.id, activeJob);
+  const job = jobQ.data;
+  const live = job && (job.status === 'running' || job.status === 'pending');
+
+  return (
+    <tr style={{ borderBottom: `1px solid ${T.n100}` }}
+        onMouseEnter={e => e.currentTarget.style.background = T.n50}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+      <td style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Icon name="table-2" size={14} color={T.n500} />
+          <span style={{ fontFamily: T.fMono, fontSize: 12, fontWeight: 600, color: T.n900 }}>{row.name}</span>
+        </div>
+      </td>
+      <td style={{ padding: '12px 16px' }}><Badge variant="info">{(row.game ?? row.gameId ?? '').toUpperCase() || '—'}</Badge></td>
+      <td style={{ padding: '12px 16px', fontFamily: T.fMono, color: T.n600, fontSize: 11 }}>{row.templateId ?? '—'}</td>
+      <td style={{ padding: '12px 16px' }}>
+        <Badge variant={meta.variant} dot={meta.dot}>{live ? 'building' : meta.label}</Badge>
+      </td>
+      <td style={{ padding: '12px 16px', fontFamily: T.fMono, color: T.n700 }}>
+        {live
+          ? <span style={{ color: T.brand }}>{fmtCount(job.processedRows)}…</span>
+          : fmtCount(row.rowCount)}
+      </td>
+      <td style={{ padding: '12px 16px', color: T.n500 }}>{fmtTime(row.lastBuildAt)}</td>
+      <td style={{ padding: '12px 16px' }}>
+        <Button
+          variant={live ? 'ghost' : 'outline'}
+          size="sm"
+          leftIcon={live ? 'loader-2' : 'play'}
+          disabled={live || buildPending}
+          onClick={onBuild}
+        >
+          {live ? 'building' : 'Build'}
+        </Button>
+      </td>
+      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+        <Button variant="ghost" size="sm" leftIcon="eye" disabled={!row.rowCount} onClick={onPreview}>
+          Preview
+        </Button>
+      </td>
+    </tr>
+  );
+}
+
+function PreviewDrawer({ id, onClose }) {
+  const previewQ = useMasterTablePreview(id, 50);
+  const cols = previewQ.data?.columns ?? [];
+  const rows = previewQ.data?.rows ?? [];
+
+  return (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100,
+      display: 'flex', justifyContent: 'flex-end',
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: 'min(900px, 90vw)', height: '100%', background: T.n0,
+        boxShadow: '-8px 0 24px rgba(0,0,0,0.15)', overflow: 'auto',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ padding: '18px 20px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Icon name="table-2" size={16} color={T.brand} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: T.n900 }}>Master table preview</div>
+            <div style={{ fontSize: 11, fontFamily: T.fMono, color: T.n500 }}>
+              {cols.length} columns · {rows.length} rows shown · sampled from per-template Postgres
+            </div>
           </div>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}><Icon name="x" size={14} /></Button>
         </div>
-
-        <div style={{ padding: '8px 18px', borderBottom: `1px solid ${T.n200}`, background: viewMode === 'raw' ? '#fffbeb' : '#f0fdf4', fontSize: 11, color: viewMode === 'raw' ? '#b45309' : '#047857', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name={viewMode === 'raw' ? 'file-text' : 'check-circle-2'} size={11} />
-          {viewMode === 'raw'
-            ? <>Showing <strong>raw source logs</strong> — unmapped, with opaque column names and encoded values. This is what game servers emit.</>
-            : <>Showing <strong>standardized output</strong> — canonical schema used by segments, models, and analytics.</>}
-        </div>
-
-        <div style={{ overflow: 'auto', maxHeight: 360 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: T.fMono, fontSize: 11 }}>
-            <thead style={{ position: 'sticky', top: 0, background: viewMode === 'raw' ? '#fef3c7' : '#ecfdf5', zIndex: 1 }}>
-              <tr>
-                {sampleToShow.columns.map(c => (
-                  <th key={c} style={{ padding: '10px 14px', textAlign: 'left', borderBottom: `1px solid ${T.n200}`, color: viewMode === 'raw' ? '#b45309' : '#047857', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.03em' }}>{c}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sampleToShow.rows.map((row, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${T.n100}` }}>
-                  {row.map((v, j) => (
-                    <td key={j} style={{ padding: '8px 14px', color: T.n700, whiteSpace: 'nowrap' }}>{String(v)}</td>
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          {previewQ.isLoading && <div style={{ padding: 32, color: T.n500 }}>Loading preview…</div>}
+          {previewQ.error && <div style={{ padding: 32, color: T.red600 }}>{String(previewQ.error.message)}</div>}
+          {!previewQ.isLoading && rows.length === 0 && (
+            <div style={{ padding: 32, color: T.n500, fontSize: 13 }}>
+              No rows yet. Trigger a build first.
+            </div>
+          )}
+          {rows.length > 0 && (
+            <table style={{ borderCollapse: 'collapse', fontFamily: T.fMono, fontSize: 11, minWidth: '100%' }}>
+              <thead>
+                <tr style={{ background: T.n50 }}>
+                  {cols.map(c => (
+                    <th key={c} style={{ position: 'sticky', top: 0, background: T.n50, padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: T.n600, borderBottom: `1px solid ${T.n200}`, whiteSpace: 'nowrap' }}>{c}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: `1px solid ${T.n100}` }}>
+                    {r.map((cell, j) => (
+                      <td key={j} style={{ padding: '6px 12px', color: T.n700, whiteSpace: 'nowrap', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {cell == null ? <span style={{ color: T.n400, fontStyle: 'italic' }}>null</span> : String(cell)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-
-        <div style={{ padding: '12px 18px', borderTop: `1px solid ${T.n200}`, background: T.n50, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ fontSize: 11, color: T.n500 }}>{sampleToShow.rows.length} sample rows shown</div>
-          <div style={{ flex: 1 }} />
-          <Button variant="ghost" size="sm" leftIcon="code-2">Open in query editor</Button>
-          <Button variant="outline" size="sm" leftIcon="git-branch">View mapping</Button>
-          <Button variant="outline" size="sm" leftIcon="network">View lineage</Button>
-        </div>
-      </Card>
+      </div>
     </div>
   );
 }

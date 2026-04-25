@@ -63,6 +63,40 @@ export function useMasterTables(filters = {}) {
   });
 }
 
+// Read up to N rows from a built master_table. Disabled when no id.
+export function useMasterTablePreview(id, limit = 50) {
+  const live = useApi();
+  return useQuery({
+    queryKey: ['masterTablePreview', id, limit],
+    queryFn: () => api(`/master-tables/${id}/preview?limit=${limit}`),
+    enabled: live && !!id,
+  });
+}
+
+// Trigger a build. Returns { jobId } on success.
+export function useBuildMasterTable() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) =>
+      api(`/master-tables/${id}/build`, { method: 'POST', body: JSON.stringify({}) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['masterTables'] }),
+  });
+}
+
+// Poll a build job. Active polling stops when status leaves "running"/"pending".
+export function useBuildJobStatus(masterTableId, jobId) {
+  const live = useApi();
+  return useQuery({
+    queryKey: ['buildJob', masterTableId, jobId],
+    queryFn: () => api(`/master-tables/${masterTableId}/build/${jobId}`),
+    enabled: live && !!masterTableId && !!jobId,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      return s === 'running' || s === 'pending' ? 1500 : false;
+    },
+  });
+}
+
 export function useMappingTemplates() {
   const live = useApi();
   return useQuery({
