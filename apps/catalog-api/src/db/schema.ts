@@ -1,0 +1,252 @@
+import {
+  pgTable, uuid, text, integer, boolean, timestamp, jsonb, primaryKey, index,
+  bigint, doublePrecision, date,
+} from 'drizzle-orm/pg-core';
+
+// ═══════════════════════════════════════════════════════════════════
+// Catalog API DB schema. One source of truth — drizzle-kit generates
+// migration SQL from this. Names mirror Postgres conventions
+// (snake_case columns, plural table names) so raw SQL stays readable.
+// ═══════════════════════════════════════════════════════════════════
+
+// Tenant table — one row per game (PTG, CFM, TFB).
+export const games = pgTable('games', {
+  id: text('id').primaryKey(),                        // 'cfm', 'ptg', 'tfb'
+  code: text('code').notNull(),                       // 'CFM', 'PTG', 'TFB'
+  name: text('name').notNull(),
+  short: text('short').notNull(),
+  color: text('color').notNull(),
+  players: text('players'),
+  genre: text('genre'),
+  trinoSchema: text('trino_schema'),                  // 'cfm_vn'
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  name: text('name').notNull(),
+  role: text('role').notNull().default('viewer'),    // admin | editor | viewer
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Metric definition — semantic shape only. Per-game source bindings live
+// in `metric_source_bindings` so different schemas can implement the
+// same metric semantics differently.
+export const metrics = pgTable('metrics', {
+  id: text('id').primaryKey(),                        // 'm_sessions_7d' (legacy slug or uuid)
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  topGroup: text('top_group').notNull(),              // engagement|growth|quality|revenue
+  type: text('type').notNull(),                       // standard|custom|propensity
+  status: text('status').notNull(),                   // certified|experimental|deprecated
+  owner: text('owner').notNull(),
+  unit: text('unit').notNull(),
+  freq: text('freq').notNull(),
+  realtime: boolean('realtime').notNull().default(false),
+  goodDir: text('good_dir').notNull().default('up'),  // up|down
+  formula: text('formula'),
+  description: text('description'),
+  games: jsonb('games').notNull(),                    // string[]
+  windowSpec: text('window_spec').notNull(),          // freeform '7d rolling' etc.
+  source: text('source'),
+  masterTable: text('master_table'),
+  deps: jsonb('deps'),                                // string[] | null
+  model: text('model'),
+  usedByCount: integer('used_by_count').notNull().default(0),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const metricSourceBindings = pgTable('metric_source_bindings', {
+  metricId: text('metric_id').notNull().references(() => metrics.id, { onDelete: 'cascade' }),
+  gameId: text('game_id').notNull().references(() => games.id),
+  sourceTable: text('source_table').notNull(),
+  masterTable: text('master_table'),
+  columnMap: jsonb('column_map'),                     // Record<string,string> | null
+}, (t) => ({
+  pk: primaryKey({ columns: [t.metricId, t.gameId] }),
+  byGame: index('msb_by_game').on(t.gameId),
+}));
+
+// Append-only metric edit history (companion to optimistic concurrency).
+export const metricChangelog = pgTable('metric_changelog', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  metricId: text('metric_id').notNull().references(() => metrics.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  actorId: uuid('actor_id').notNull().references(() => users.id),
+  diff: jsonb('diff').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byMetric: index('mcl_by_metric').on(t.metricId, t.version),
+}));
+
+export const segments = pgTable('segments', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  game: text('game').notNull(),                       // PTG|CFM|TFB|ALL — denormalised for filter perf
+  size: integer('size').notNull().default(0),
+  sizeTrend: text('size_trend').notNull().default('flat'),
+  delta: text('delta').notNull().default(''),
+  status: text('status').notNull().default('draft'),
+  owner: text('owner').notNull(),
+  updated: text('updated').notNull().default(''),
+  campaigns: integer('campaigns').notNull().default(0),
+  description: text('description').notNull().default(''),
+  filters: jsonb('filters').notNull(),                // SegmentFilter[]
+  criteria: jsonb('criteria'),                        // SegmentCriteria | null
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byGame: index('seg_by_game').on(t.game),
+}));
+
+export const segmentChangelog = pgTable('segment_changelog', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  segmentId: text('segment_id').notNull().references(() => segments.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull(),
+  actorId: uuid('actor_id').notNull().references(() => users.id),
+  diff: jsonb('diff').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// User-pinned metrics — for the per-user dashboard pin list.
+export const userPins = pgTable('user_pins', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entity: text('entity').notNull(),                   // 'metric' | 'segment' | …
+  entityId: text('entity_id').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.entity, t.entityId] }),
+}));
+
+export const auditLog = pgTable('audit_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  actorId: uuid('actor_id').references(() => users.id),
+  action: text('action').notNull(),                   // create|update|delete|archive|pin|unpin|login|logout
+  entity: text('entity').notNull(),
+  entityId: text('entity_id').notNull(),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byEntity: index('audit_by_entity').on(t.entity, t.entityId),
+  byActor: index('audit_by_actor').on(t.actorId),
+  byCreated: index('audit_by_created').on(t.createdAt),
+}));
+
+// Catalog read-only display tables (mirror the prototype's shape).
+export const sources = pgTable('sources', {
+  id: text('id').primaryKey(),
+  kind: text('kind').notNull(),
+  type: text('type').notNull(),
+  name: text('name').notNull(),
+  game: text('game').notNull(),
+  cadence: text('cadence').notNull(),
+  volume: text('volume').notNull(),
+  owner: text('owner').notNull(),
+  status: text('status').notNull(),
+  lastRun: text('last_run').notNull(),
+  topics: jsonb('topics').notNull(),
+  path: text('path').notNull(),
+});
+
+// Mapping rows — one per saved (game, template) instance. `spec` is the
+// full MappingSpec JSON; phase 04b adds builds on top of this.
+export const mappings = pgTable('mappings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  gameId: text('game_id').notNull().references(() => games.id),
+  templateId: text('template_id').notNull(),
+  spec: jsonb('spec').notNull(),
+  owner: text('owner').notNull(),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byGame: index('mappings_by_game').on(t.gameId),
+}));
+
+// Master-table registry — one row per built master. Physical rows live
+// in per-template wide tables (see schema-master.ts in phase 04b).
+export const masterTables = pgTable('master_tables', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  gameId: text('game_id').references(() => games.id),
+  mappingId: uuid('mapping_id').references(() => mappings.id),
+  templateId: text('template_id').notNull(),
+  status: text('status').notNull().default('never_built'),
+  lastBuildAt: timestamp('last_build_at', { withTimezone: true }),
+  lastBuildMs: integer('last_build_ms'),
+  rowCount: integer('row_count').notNull().default(0),
+  columns: jsonb('columns'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const buildJobs = pgTable('build_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  masterTableId: uuid('master_table_id').notNull().references(() => masterTables.id, { onDelete: 'cascade' }),
+  status: text('status').notNull(),                   // pending|running|completed|failed
+  processedRows: integer('processed_rows').notNull().default(0),
+  totalRows: integer('total_rows'),
+  error: text('error'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+}, (t) => ({
+  byMaster: index('jobs_by_master').on(t.masterTableId, t.startedAt),
+}));
+
+export const freshness = pgTable('freshness_records', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  target: text('target').notNull(),                   // table or metric name
+  game: text('game').notNull(),
+  type: text('type').notNull(),                       // table|metric
+  sla: text('sla').notNull(),
+  current: text('current').notNull(),
+  status: text('status').notNull(),                   // healthy|warning|breach
+  breaches7d: integer('breaches_7d').notNull().default(0),
+  trend: jsonb('trend').notNull(),                    // number[]
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byTarget: index('fresh_by_target').on(t.target, t.game),
+}));
+
+// ─── Per-template master physical tables (phase 04b uses these) ──────
+// Common columns: master_table_id (FK), composite PK (master_table_id, vopenid).
+// Wide columns mirror MappingTemplate.outputColumns. Rebuilt every build.
+export const masterUserProfileDx = pgTable('master_user_profile_dx', {
+  masterTableId: uuid('master_table_id').notNull().references(() => masterTables.id, { onDelete: 'cascade' }),
+  vopenid: text('vopenid').notNull(),
+  roleid: text('roleid'),
+  gameId: text('game_id'),
+  installDate: date('install_date'),
+  mediaSource: text('media_source'),
+  countryCode: text('country_code'),
+  platform: text('platform'),
+  loginRowsD7: integer('login_rows_d7'),
+  daysActiveD7: integer('days_active_d7'),
+  matchesD7: integer('matches_d7'),
+  killsD7: bigint('kills_d7', { mode: 'number' }),
+  revUsdD1: doublePrecision('rev_usd_d1'),
+  ordersD1: integer('orders_d1'),
+  isPayerD1: boolean('is_payer_d1'),
+  revUsdD7: doublePrecision('rev_usd_d7'),
+  ordersD7: integer('orders_d7'),
+  isPayerD7: boolean('is_payer_d7'),
+  bpOrdersD7: integer('bp_orders_d7'),
+  isBpD7: boolean('is_bp_d7'),
+  revUsdD30: doublePrecision('rev_usd_d30'),
+  ordersD30: integer('orders_d30'),
+  isPayerD30: boolean('is_payer_d30'),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.masterTableId, t.vopenid] }),
+  byInstall: index('mupdx_install').on(t.masterTableId, t.installDate),
+  byMedia: index('mupdx_media').on(t.masterTableId, t.mediaSource),
+}));
+
+// The other 5 templates' physical tables get added in phase 04b when
+// they're actually wired to the build pipeline. KISS — add as needed.
