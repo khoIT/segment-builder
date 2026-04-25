@@ -1,0 +1,46 @@
+# Full-stack profile: extends the dev compose with the three Nest +
+# Vite apps. Used for CI smoke tests and staging-parity local runs.
+# `docker compose -f infra/docker-compose.yml -f infra/docker-compose.fullstack.yml up -d`
+services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+
+  catalog-api:
+    build:
+      context: ..
+      dockerfile: apps/catalog-api/Dockerfile
+    container_name: bedrock_catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      DATABASE_URL: postgres://bedrock:dev@postgres:5432/bedrock
+      JWT_SECRET: ci-secret-replace-me
+      AUTH_DEV_USER: ci@vng.local
+      AUTH_DEV_USER_NAME: CI
+      WEB_ORIGIN: http://localhost:5173,http://web:5173
+      LOG_LEVEL: info
+    ports:
+      - "3001:3001"
+
+  query-svc:
+    build:
+      context: ..
+      dockerfile: apps/query-svc/Dockerfile
+    container_name: bedrock_query
+    depends_on:
+      - catalog-api
+    environment:
+      PORT: 3002
+      NODE_ENV: production
+      JWT_SECRET: ci-secret-replace-me
+      QUERY_DRIVER: mock
+      CATALOG_API: http://catalog-api:3001/api/v1
+      WEB_ORIGIN: http://localhost:5173,http://web:5173
+      LOG_LEVEL: info
+    ports:
+      - "3002:3002"

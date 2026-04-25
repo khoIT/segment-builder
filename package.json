@@ -8,12 +8,17 @@
   },
   "scripts": {
     "dev": "turbo run dev",
+    "dev:db": "docker compose -f infra/docker-compose.yml up -d postgres",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "clean": "turbo run clean && rimraf node_modules .turbo",
-    "start": "serve -s apps/web/dist -l tcp://0.0.0.0:${PORT:-3000}"
+    "start": "serve -s apps/web/dist -l tcp://0.0.0.0:${PORT:-3000}",
+    "migrate": "pnpm --filter @bedrock/catalog-api db:migrate",
+    "seed": "pnpm --filter @bedrock/catalog-api db:seed",
+    "reset-db": "node scripts/reset-db.cjs",
+    "refresh-mocks": "tsx infra/trino-mock/refresh.ts"
   },
   "dependencies": {
     "serve": "^14.2.6"

@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: bedrock
+          POSTGRES_USER: bedrock
+          POSTGRES_PASSWORD: dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bedrock -d bedrock"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://bedrock:dev@localhost:5432/bedrock
+      JWT_SECRET: ci-secret-32bytes-replace-in-prod
+      AUTH_DEV_USER: ci@vng.local
+      AUTH_DEV_USER_NAME: CI
+      QUERY_DRIVER: mock
+      CATALOG_API: http://localhost:3001/api/v1
+      NODE_ENV: development
+      LOG_LEVEL: info
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.32.1 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Migrate + seed
+        run: |
+          pnpm migrate
+          pnpm seed
+
+      - name: Boot catalog-api + query-svc
+        run: |
+          PORT=3001 nohup pnpm --filter @bedrock/catalog-api start &
+          PORT=3002 nohup pnpm --filter @bedrock/query-svc start &
+          for i in {1..30}; do
+            if curl -sf http://localhost:3001/api/v1/health && curl -sf http://localhost:3002/api/v1/health; then
+              echo "both services healthy"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Smoke health
+        run: |
+          curl -sf http://localhost:3001/api/v1/health | grep -q '"ok":true'
+          curl -sf http://localhost:3002/api/v1/health | grep -q '"ok":true'
