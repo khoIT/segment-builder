@@ -7,3 +7,5 @@ export * as Sources from './sources.js';
 export * as Pins from './pins.js';
 export * as Audit from './audit.js';
 export * as Query from './query.js';
+export * as Mappings from './mappings.js';
+export * as MasterTables from './master-table-builds.js';

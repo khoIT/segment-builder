@@ -20,5 +20,8 @@ export * from './audit.js';
 export * from './auth.js';
 export * from './errors.js';
 
+// Mapping DSL + 6 starter templates ----------------------------------
+export * from './mapping/index.js';
+
 // API DTOs (namespaced) ----------------------------------------------
 export * from './api/index.js';
