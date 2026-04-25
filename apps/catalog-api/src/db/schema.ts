@@ -77,7 +77,7 @@ export const metricChangelog = pgTable('metric_changelog', {
   id: uuid('id').primaryKey().defaultRandom(),
   metricId: text('metric_id').notNull().references(() => metrics.id, { onDelete: 'cascade' }),
   version: integer('version').notNull(),
-  actorId: uuid('actor_id').notNull().references(() => users.id),
+  actorId: text('actor_id').notNull(),
   diff: jsonb('diff').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -109,14 +109,16 @@ export const segmentChangelog = pgTable('segment_changelog', {
   id: uuid('id').primaryKey().defaultRandom(),
   segmentId: text('segment_id').notNull().references(() => segments.id, { onDelete: 'cascade' }),
   version: integer('version').notNull(),
-  actorId: uuid('actor_id').notNull().references(() => users.id),
+  actorId: text('actor_id').notNull(),
   diff: jsonb('diff').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// User-pinned metrics — for the per-user dashboard pin list.
+// User-pinned metrics — keyed by JWT.sub (email in dev, UUID in prod).
+// Stored as text to keep dev-mode flexible; tighten to FK once SSO maps
+// every claim back to a real users row.
 export const userPins = pgTable('user_pins', {
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
   entity: text('entity').notNull(),                   // 'metric' | 'segment' | …
   entityId: text('entity_id').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -126,7 +128,7 @@ export const userPins = pgTable('user_pins', {
 
 export const auditLog = pgTable('audit_log', {
   id: uuid('id').primaryKey().defaultRandom(),
-  actorId: uuid('actor_id').references(() => users.id),
+  actorId: text('actor_id'),                          // JWT.sub (text, not FK)
   action: text('action').notNull(),                   // create|update|delete|archive|pin|unpin|login|logout
   entity: text('entity').notNull(),
   entityId: text('entity_id').notNull(),

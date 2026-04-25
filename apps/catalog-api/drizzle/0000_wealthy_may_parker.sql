@@ -1,6 +1,6 @@
 CREATE TABLE "audit_log" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"actor_id" uuid,
+	"actor_id" text,
 	"action" text NOT NULL,
 	"entity" text NOT NULL,
 	"entity_id" text NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE "metric_changelog" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"metric_id" text NOT NULL,
 	"version" integer NOT NULL,
-	"actor_id" uuid NOT NULL,
+	"actor_id" text NOT NULL,
 	"diff" jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -147,7 +147,7 @@ CREATE TABLE "segment_changelog" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"segment_id" text NOT NULL,
 	"version" integer NOT NULL,
-	"actor_id" uuid NOT NULL,
+	"actor_id" text NOT NULL,
 	"diff" jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -187,7 +187,7 @@ CREATE TABLE "sources" (
 );
 --> statement-breakpoint
 CREATE TABLE "user_pins" (
-	"user_id" uuid NOT NULL,
+	"user_id" text NOT NULL,
 	"entity" text NOT NULL,
 	"entity_id" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -204,19 +204,15 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_actor_id_users_id_fk" FOREIGN KEY ("actor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "build_jobs" ADD CONSTRAINT "build_jobs_master_table_id_master_tables_id_fk" FOREIGN KEY ("master_table_id") REFERENCES "public"."master_tables"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mappings" ADD CONSTRAINT "mappings_game_id_games_id_fk" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "master_tables" ADD CONSTRAINT "master_tables_game_id_games_id_fk" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "master_tables" ADD CONSTRAINT "master_tables_mapping_id_mappings_id_fk" FOREIGN KEY ("mapping_id") REFERENCES "public"."mappings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "master_user_profile_dx" ADD CONSTRAINT "master_user_profile_dx_master_table_id_master_tables_id_fk" FOREIGN KEY ("master_table_id") REFERENCES "public"."master_tables"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "metric_changelog" ADD CONSTRAINT "metric_changelog_metric_id_metrics_id_fk" FOREIGN KEY ("metric_id") REFERENCES "public"."metrics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "metric_changelog" ADD CONSTRAINT "metric_changelog_actor_id_users_id_fk" FOREIGN KEY ("actor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "metric_source_bindings" ADD CONSTRAINT "metric_source_bindings_metric_id_metrics_id_fk" FOREIGN KEY ("metric_id") REFERENCES "public"."metrics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "metric_source_bindings" ADD CONSTRAINT "metric_source_bindings_game_id_games_id_fk" FOREIGN KEY ("game_id") REFERENCES "public"."games"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "segment_changelog" ADD CONSTRAINT "segment_changelog_segment_id_segments_id_fk" FOREIGN KEY ("segment_id") REFERENCES "public"."segments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "segment_changelog" ADD CONSTRAINT "segment_changelog_actor_id_users_id_fk" FOREIGN KEY ("actor_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_pins" ADD CONSTRAINT "user_pins_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "audit_by_entity" ON "audit_log" USING btree ("entity","entity_id");--> statement-breakpoint
 CREATE INDEX "audit_by_actor" ON "audit_log" USING btree ("actor_id");--> statement-breakpoint
 CREATE INDEX "audit_by_created" ON "audit_log" USING btree ("created_at");--> statement-breakpoint

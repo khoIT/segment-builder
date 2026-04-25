@@ -1,5 +1,5 @@
 {
-  "id": "71dffe34-1ac3-4dff-9915-5e1232861b55",
+  "id": "cdf8d3e9-9b09-4d64-983e-3ad57dd44229",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -17,7 +17,7 @@
         },
         "actor_id": {
           "name": "actor_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -106,21 +106,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "audit_log_actor_id_users_id_fk": {
-          "name": "audit_log_actor_id_users_id_fk",
-          "tableFrom": "audit_log",
-          "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -859,7 +845,7 @@
         },
         "actor_id": {
           "name": "actor_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -912,19 +898,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "metric_changelog_actor_id_users_id_fk": {
-          "name": "metric_changelog_actor_id_users_id_fk",
-          "tableFrom": "metric_changelog",
-          "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1210,7 +1183,7 @@
         },
         "actor_id": {
           "name": "actor_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -1241,19 +1214,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "segment_changelog_actor_id_users_id_fk": {
-          "name": "segment_changelog_actor_id_users_id_fk",
-          "tableFrom": "segment_changelog",
-          "tableTo": "users",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1489,7 +1449,7 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -1514,21 +1474,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "user_pins_user_id_users_id_fk": {
-          "name": "user_pins_user_id_users_id_fk",
-          "tableFrom": "user_pins",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {
         "user_pins_user_id_entity_entity_id_pk": {
           "name": "user_pins_user_id_entity_entity_id_pk",

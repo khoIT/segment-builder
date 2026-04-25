@@ -8,6 +8,11 @@ import { JwtGuard } from './auth/jwt.guard';
 import { HealthModule } from './health/health.module';
 import { HttpErrorFilter } from './common/http-error.filter';
 import { CorrelationMiddleware } from './common/correlation.middleware';
+import { AuditModule } from './audit/audit.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { SegmentsModule } from './segments/segments.module';
+import { PinsModule } from './pins/pins.module';
 
 @Module({
   imports: [
@@ -23,7 +28,12 @@ import { CorrelationMiddleware } from './common/correlation.middleware';
     }),
     DbModule,
     AuthModule,
+    AuditModule,
     HealthModule,
+    CatalogModule,
+    MetricsModule,
+    SegmentsModule,
+    PinsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpErrorFilter },
