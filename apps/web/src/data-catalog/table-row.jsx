@@ -111,17 +111,19 @@ function ExpandPanel({ tableId, jumpToColumn, onJumpHandled, setPage, onProfile 
       </div>
       {/* Sample */}
       <SampleRows sample={detail.sample} />
-      {/* Lineage + Build metric CTA */}
+      {/* Lineage + Build metric CTA (raw events only) */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <LineageChips tableId={detail.id} setPage={setPage} />
         </div>
-        <Button
-          variant="primary"
-          onClick={() => { setHash({ table: detail.id }); setPage?.('metric-builder'); }}
-        >
-          <Icon name="sigma" size={13} /> Build metric
-        </Button>
+        {detail.layer === 'raw_event' && (
+          <Button
+            variant="primary"
+            onClick={() => { setHash({ source: detail.id }); setPage?.('metric-builder'); }}
+          >
+            <Icon name="sigma" size={13} /> Build metric
+          </Button>
+        )}
       </div>
     </div>
   );

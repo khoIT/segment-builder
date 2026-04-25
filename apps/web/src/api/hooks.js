@@ -100,11 +100,22 @@ export function useBuildJobStatus(masterTableId, jobId) {
 // ─── Data Catalog (always-live, no fallback) ────────────────────────
 // The Data Catalog page is live-only by design: real Postgres rows
 // (catalog_tables / catalog_columns) seeded by the backend.
+//
+// `retry: 3` + `refetchOnMount: 'always'` makes these queries resilient
+// to a transient backend restart — without them, the first failed
+// attempt sticks in the cache and "Failed to fetch" persists until the
+// user hard-reloads. Backoff caps at ~6s so navigation feels snappy.
+const RESILIENT = {
+  retry: 3,
+  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 6000),
+  refetchOnMount: 'always',
+};
 
 export function useDataCatalog(filters = {}) {
   return useQuery({
     queryKey: ['dataCatalog', filters],
     queryFn: () => api(`/catalog${qs(filters)}`),
+    ...RESILIENT,
   });
 }
 
@@ -113,6 +124,7 @@ export function useDataCatalogTable(id) {
     queryKey: ['dataCatalogTable', id],
     queryFn: () => api(`/catalog/${id}`),
     enabled: !!id,
+    ...RESILIENT,
   });
 }
 
@@ -123,6 +135,7 @@ export function useDataCatalogLineage(id) {
     enabled: !!id,
   });
 }
+
 
 // Per-column profile (null %, distinct, top values). Hits query-svc.
 export function useColumnProfile(catalog, schema, table, column) {
@@ -228,7 +241,8 @@ export function useSqlPreview(spec) {
       method: 'POST',
       body: JSON.stringify({ spec }),
     }),
-    enabled: !!spec && !!spec.cohort?.sourceTable && !!spec.aggregation?.fn,
+    // Accept both new shape (sources[]) and legacy shape (cohort) for back-compat.
+    enabled: !!spec && !!(spec.sources?.[0]?.table ?? spec.cohort?.sourceTable) && !!spec.aggregation?.fn,
     staleTime: 30_000,
   });
 }
@@ -284,6 +298,34 @@ export function useMetricRuns(id, limit = 20) {
     queryFn: () => api(`/metrics/${id}/runs?limit=${limit}`),
     enabled: !!id,
     refetchInterval: 5000,
+  });
+}
+
+// ─── Connectors ─────────────────────────────────────────────────────
+// Always-live (no fallback). Connector list is a live-only feature —
+// demo state relies on seeded rows in Postgres, not mock JSX data.
+
+export function useConnectors() {
+  return useQuery({
+    queryKey: ['connectors'],
+    queryFn: () => api('/connectors'),
+    ...RESILIENT,
+  });
+}
+
+export function useCreateConnector() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api('/connectors', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['connectors'] }),
+  });
+}
+
+export function useTestConnection(id) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api(`/connectors/${id}/test`, { method: 'POST', body: '{}' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['connectors'] }),
   });
 }
 

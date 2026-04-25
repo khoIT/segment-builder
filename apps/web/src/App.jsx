@@ -2,9 +2,8 @@ import React from 'react';
 import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Avatar } from './theme.jsx';
 import { SegmentBuilder } from './SegmentBuilder.jsx';
 import { LiveMonitor } from './LiveMonitor.jsx';
-import { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics } from './Screens.jsx';
+import { DataConnectors, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics } from './Screens.jsx';
 import { Sources } from './Sources.jsx';
-import { MappingStudio } from './MappingStudio.jsx';
 import { DataCatalog } from './data-catalog/index.jsx';
 import { MetricBuilder } from './metric-builder/index.jsx';
 import { MetricsCatalog } from './MetricsCatalog.jsx';
@@ -29,8 +28,6 @@ const TWEAKS = /*EDITMODE-BEGIN*/{
 const NAV = [
   { group: 'Sources',      items: [
     { id: 'sources',    label: 'Sources',            icon: 'database' },
-    { id: 'explorer',   label: 'Raw data explorer',  icon: 'file-search' },
-    { id: 'mapping',    label: 'Mapping Studio',     icon: 'git-branch', primary: true },
     { id: 'datacatalog', label: 'Data Catalog',      icon: 'library' },
   ]},
   { group: 'Metrics',      items: [
@@ -53,11 +50,11 @@ const NAV = [
 const ROLES = [
   { id: 'liveops',  label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
     pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'metric-builder', 'datacatalog']) },
-  { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'mapping',
-    pages: new Set(['sources', 'mapping', 'datacatalog', 'metric-builder', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
+  { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'datacatalog',
+    pages: new Set(['sources', 'datacatalog', 'metric-builder', 'metrics', 'freshness', 'features', 'models', 'builder']) },
   { id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
     pages: new Set(['monitor', 'campaigns', 'analytics', 'metrics']) },
-  { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'mapping',
+  { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'datacatalog',
     pages: null },
 ];
 
@@ -576,7 +573,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('lo_tweaks') || '{}'); } catch { return {}; }
   };
   const [tweaks, setTweaks] = React.useState(() => ({ ...TWEAKS, ...loadLocalTweaks() }));
-  const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'mapping');
+  const [page, setPage] = React.useState(() => localStorage.getItem('lo_page') || 'datacatalog');
   const [role, setRoleRaw] = React.useState(() => localStorage.getItem('lo_role') || 'liveops');
   const setRole = React.useCallback((newRole) => {
     setRoleRaw(newRole);
@@ -596,12 +593,10 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case 'sources':    return <Sources />;
-      case 'mapping':    return <MappingStudio setPage={setPage} />;
       case 'datacatalog': return <DataCatalog setPage={setPage} />;
       case 'metric-builder': return <MetricBuilder setPage={setPage} />;
       case 'metrics':    return <MetricsCatalog setPage={setPage} />;
       case 'freshness':  return <FreshnessSLAs />;
-      case 'explorer':   return <RawExplorer />;
       case 'features':   return <FeatureBuilder />;
       case 'models':     return <PropensityModels />;
       case 'builder':
@@ -613,7 +608,7 @@ export default function App() {
       case 'analytics':  return <GameAnalytics />;
       // Legacy page ID kept for old localStorage values — DataConnectors still available.
       case 'connectors': return <DataConnectors />;
-      default:           return <MappingStudio />;
+      default:           return <DataCatalog setPage={setPage} />;
     }
   };
 

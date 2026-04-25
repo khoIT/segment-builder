@@ -123,3 +123,7 @@ worktrees/
 /uploads/
 /screenshots/
 *.tmp.txt
+
+# demo runtime
+.demo-drip.pid
+.demo-drip.log

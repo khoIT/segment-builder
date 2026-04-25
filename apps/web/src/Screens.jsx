@@ -5,6 +5,7 @@ import { LineageDrawer } from './LineageDrawer.jsx';
 import { GAMES, CONNECTORS, TABLES, FEATURES, MODELS, SEGMENTS, CAMPAIGNS, SAMPLE_ROWS } from './data.jsx';
 import { useHashState } from './routing/hash-state.js';
 import { FilterBanner } from './routing/filter-banner.jsx';
+import { useDataCatalog, useDataCatalogTable } from './api/hooks.js';
 
 /* global React, Recharts, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline, CONNECTORS, TABLES, FEATURES, MODELS, CAMPAIGNS, SEGMENTS, GAMES, SAMPLE_ROWS */
 
@@ -108,127 +109,6 @@ function DataConnectors() {
   );
 }
 
-// ─── Raw Data Explorer ───────────────────────────────────────────
-function RawExplorer() {
-  const [table, setTable] = React.useState(TABLES[0]);
-  const [query, setQuery] = React.useState(
-`SELECT user_id, event_date, country, platform,
-       sessions, spend_usd, churn_risk, propensity_pay, rank_tier
-FROM features.player_daily
-WHERE game = 'PTG' AND event_date >= date '2026-04-22'
-ORDER BY spend_usd DESC
-LIMIT 1000;`);
-  useLucide(table);
-
-  return (
-    <div style={{ display: 'flex', height: '100%', background: T.n50 }}>
-      {/* sidebar: tables */}
-      <div style={{ width: 280, borderRight: `1px solid ${T.n200}`, background: '#fff', overflow: 'auto' }}>
-        <div style={{ padding: '14px 14px 10px' }}>
-          <div style={{ fontFamily: T.fSans, fontSize: 11, fontWeight: 600, color: T.n500, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Catalog</div>
-          <Input size="sm" leftIcon="search" placeholder="Search tables…" />
-        </div>
-        <div style={{ padding: '0 8px 16px' }}>
-          {['PTG', 'CFM', 'TFB'].map(g => (
-            <div key={g} style={{ marginBottom: 10 }}>
-              <div style={{ fontFamily: T.fSans, fontSize: 10, fontWeight: 600, color: T.n400, padding: '6px 10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{g}</div>
-              {TABLES.filter(t => t.game === g).map(t => {
-                const active = t.name === table.name && t.game === table.game;
-                return (
-                  <div key={t.name + t.game} onClick={() => setTable(t)} style={{
-                    padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-                    background: active ? T.brandSoft : 'transparent',
-                    color: active ? T.brand : T.n800,
-                    marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8,
-                  }} onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.n50; }}
-                     onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}>
-                    <Icon name="table" size={12} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: T.fMono, fontSize: 11, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-                      <div style={{ fontFamily: T.fSans, fontSize: 10, color: T.n500 }}>{t.rows} · {t.cols} cols</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* main */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div style={{ padding: '18px 24px 12px', borderBottom: `1px solid ${T.n200}`, background: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
-            <div>
-              <div style={{ fontFamily: T.fSans, fontSize: 11, color: T.n500, marginBottom: 4 }}>Exploring · {table.game}</div>
-              <div style={{ fontFamily: T.fMono, fontSize: 20, fontWeight: 600, color: T.n950 }}>{table.name}</div>
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, fontFamily: T.fSans, fontSize: 11, color: T.n500 }}>
-                <span><Icon name="database" size={11} /> {table.rows} rows</span>
-                <span><Icon name="columns" size={11} /> {table.cols} columns</span>
-                <span><Icon name="clock" size={11} /> fresh {table.freshness}</span>
-                <span><Icon name="check-circle" size={11} /> {table.pct}% quality</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant="outline" size="sm" leftIcon="sparkles">Auto-profile</Button>
-              <Button variant="outline" size="sm" leftIcon="plus">Promote to feature</Button>
-              <Button variant="primary" size="sm" leftIcon="play">Run</Button>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          <div style={{ padding: '14px 24px', borderBottom: `1px solid ${T.n200}`, background: T.n950, color: T.n100 }}>
-            <pre style={{ margin: 0, fontFamily: T.fMono, fontSize: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-              <span style={{ color: '#8b5cf6' }}>SELECT</span> user_id, event_date, country, platform,{'\n'}
-              {'       '}sessions, spend_usd, churn_risk, propensity_pay, rank_tier{'\n'}
-              <span style={{ color: '#8b5cf6' }}>FROM</span> features.player_daily{'\n'}
-              <span style={{ color: '#8b5cf6' }}>WHERE</span> game = <span style={{ color: '#fb923c' }}>'PTG'</span> <span style={{ color: '#8b5cf6' }}>AND</span> event_date &gt;= <span style={{ color: '#fb923c' }}>date '2026-04-22'</span>{'\n'}
-              <span style={{ color: '#8b5cf6' }}>ORDER BY</span> spend_usd <span style={{ color: '#8b5cf6' }}>DESC</span>{'\n'}
-              <span style={{ color: '#8b5cf6' }}>LIMIT</span> 1000;
-            </pre>
-          </div>
-
-          <div style={{ padding: '8px 24px', borderBottom: `1px solid ${T.n200}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 10, fontFamily: T.fSans, fontSize: 11, color: T.n500 }}>
-            <Badge variant="success" dot>Query OK</Badge>
-            <span>1,000 rows · 28ms · cached</span>
-            <div style={{ flex: 1 }} />
-            <Button variant="ghost" size="xs" leftIcon="download">Export CSV</Button>
-            <Button variant="ghost" size="xs" leftIcon="bar-chart-2">Visualize</Button>
-          </div>
-
-          <div style={{ flex: 1, overflow: 'auto', background: '#fff' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: T.fMono, fontSize: 11 }}>
-              <thead style={{ position: 'sticky', top: 0, background: T.n50, zIndex: 1 }}>
-                <tr>
-                  {Object.keys(SAMPLE_ROWS[0]).map(k => (
-                    <th key={k} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: T.n600, fontSize: 10, letterSpacing: '0.04em', textTransform: 'uppercase', borderBottom: `1px solid ${T.n200}`, whiteSpace: 'nowrap' }}>{k}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {SAMPLE_ROWS.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: `1px solid ${T.n100}` }}
-                      onMouseEnter={e => e.currentTarget.style.background = T.n50}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    {Object.entries(r).map(([k, v]) => (
-                      <td key={k} style={{
-                        padding: '7px 12px', color: T.n800,
-                        ...(typeof v === 'number' && v > 0 && v < 1
-                          ? { background: `rgba(240,90,34,${v * 0.25})`, color: v > 0.6 ? '#7c2d12' : T.n800 }
-                          : {}),
-                      }}>{typeof v === 'number' && v % 1 !== 0 ? v.toFixed(2) : v}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Feature Builder ─────────────────────────────────────────────
 function FeatureBuilder() {
@@ -741,6 +621,6 @@ function GameAnalytics() {
   );
 }
 
-Object.assign(window, { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics });
+Object.assign(window, { DataConnectors, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics });
 
-export { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics };
+export { DataConnectors, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics };
