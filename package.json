@@ -17,7 +17,9 @@
     "start": "serve -s apps/web/dist -l tcp://0.0.0.0:${PORT:-3000}",
     "migrate": "pnpm --filter @bedrock/catalog-api db:migrate",
     "seed": "pnpm --filter @bedrock/catalog-api db:seed",
+    "sim:drip": "pnpm --filter @bedrock/catalog-api sim:drip",
     "reset-db": "node scripts/reset-db.cjs",
+    "demo:reset": "node scripts/demo-reset.cjs --confirm",
     "refresh-mocks": "tsx infra/trino-mock/refresh.ts"
   },
   "dependencies": {

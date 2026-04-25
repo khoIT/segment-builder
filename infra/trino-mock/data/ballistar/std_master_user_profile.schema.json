@@ -1,0 +1,176 @@
+{
+  "catalog": "iceberg",
+  "schema": "ballistar",
+  "table": "std_master_user_profile",
+  "columns": [
+    {
+      "name": "game_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "user_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "device_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "install_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "install_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "touch_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "media_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "campaign_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "adset_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ad_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "site_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "first_os",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "last_os",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "os_list",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "first_country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "last_country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "countries",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "first_login_channel",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "last_login_channel",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "login_channels",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fb_emails",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "create_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "register_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "first_login_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "last_login_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "last_logout_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "first_charge_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "last_charge_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "total_rev",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "match_by",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "match_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "install_app_store",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "user_id",
+    "device_id"
+  ]
+}

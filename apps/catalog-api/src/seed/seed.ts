@@ -132,6 +132,57 @@ async function main() {
 
   await seedDataCatalog(db, pool);
 
+  // ── Demo connectors (3 rows — BigQuery, Stripe, AppsFlyer) ────────
+  // Idempotent: ON CONFLICT DO NOTHING keyed on id.
+  console.log('[seed] inserting demo connectors');
+  const demoConnectors = [
+    {
+      id: 'conn_demo_bigquery',
+      type: 'bigquery',
+      name: 'BigQuery · Analytics DW',
+      env: 'production',
+      host: 'bigquery.googleapis.com',
+      port: null,
+      db: 'bedrock-prod-analytics',
+      user: 'sa-bedrock-reader@bedrock-prod.iam',
+      passEncrypted: Buffer.from('mock-service-account-key-json').toString('base64'),
+      status: 'ok',
+      lastSyncAt: new Date(Date.now() - 7 * 60_000),  // 7 min ago
+      datasetCount: 12,
+    },
+    {
+      id: 'conn_demo_appsflyer',
+      type: 'kafka',
+      name: 'AppsFlyer · Attribution',
+      env: 'production',
+      host: 'kafka.appsflyer-mirror.internal',
+      port: 9092,
+      db: null,
+      user: 'bedrock-consumer',
+      passEncrypted: Buffer.from('mock-sasl-password').toString('base64'),
+      status: 'ok',
+      lastSyncAt: new Date(Date.now() - 2 * 60_000),  // 2 min ago
+      datasetCount: 4,
+    },
+    {
+      id: 'conn_demo_stripe',
+      type: 's3',
+      name: 'Stripe · Revenue Export',
+      env: 'staging',
+      host: 's3.ap-southeast-1.amazonaws.com',
+      port: null,
+      db: 'bedrock-stripe-exports',
+      user: 'AKIAMOCKSTRIPEKEY',
+      passEncrypted: Buffer.from('mock-stripe-s3-secret').toString('base64'),
+      status: 'ok',
+      lastSyncAt: new Date(Date.now() - 45 * 60_000), // 45 min ago
+      datasetCount: 3,
+    },
+  ];
+  for (const c of demoConnectors) {
+    await db.insert(schema.connectors).values(c as never).onConflictDoNothing();
+  }
+
   // eslint-disable-next-line no-console
   console.log('[seed] inserting demo metric pipelines + materialized values');
   await seedDemoMetricPipelines(db, pool);

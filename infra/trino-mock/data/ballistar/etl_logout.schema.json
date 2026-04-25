@@ -1,0 +1,86 @@
+{
+  "catalog": "iceberg",
+  "schema": "ballistar",
+  "table": "etl_logout",
+  "columns": [
+    {
+      "name": "account_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "logout_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "login_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "server_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "client_ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "online_time",
+      "type": "bigint",
+      "nullable": ""
+    },
+    {
+      "name": "os_platform",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "os_version",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "device_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "device_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "client_ip",
+    "device_id"
+  ]
+}

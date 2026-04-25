@@ -1,0 +1,407 @@
+{
+  "catalog": "iceberg",
+  "schema": "ballistar",
+  "table": "etl_inapp_event",
+  "columns": [
+    {
+      "name": "attributed_touch_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attributed_touch_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "install_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "event_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "event_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_value",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_revenue",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "event_revenue_currency",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_revenue_usd",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "event_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "is_receipt_validated",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_prt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "media_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "keywords",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "campaign",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_c_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_adset",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_adset_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_ad",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_ad_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_ad_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_site_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_sub_site_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_cost_model",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_cost_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "af_cost_currency",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor1_af_prt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor1_media_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor1_campaign",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor1_touch_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor1_touch_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "contributor2_af_prt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor2_media_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor2_campaign",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor2_touch_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor2_touch_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "contributor3_af_prt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor3_media_source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor3_campaign",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor3_touch_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "contributor3_touch_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "region",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "state",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "city",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "postal_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dma",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "wifi",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "operator",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "carrier",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "language",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "appsflyer_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "advertising_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "idfa",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "android_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "customer_user_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "imei",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "idfv",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "platform",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "device_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "os_version",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "app_version",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sdk_version",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "app_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "app_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bundle_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "is_retargeting",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "retargeting_conversion_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attribution_lookback",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "af_reengagement_window",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "is_primary_attribution",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "user_agent",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "http_referrer",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "original_url",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "device_model",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "ip",
+    "customer_user_id",
+    "imei"
+  ]
+}

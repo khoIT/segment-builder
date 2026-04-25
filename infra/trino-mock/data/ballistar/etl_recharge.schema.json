@@ -1,0 +1,93 @@
+{
+  "catalog": "iceberg",
+  "schema": "ballistar",
+  "table": "etl_recharge",
+  "columns": [
+    {
+      "name": "account_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "transaction_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "money_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "product_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "charged_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "ingame_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "recharge_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "server_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "payment_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "os_platform",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "is_first_recharge",
+      "type": "bigint",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "add_info",
+      "type": "varchar",
+      "nullable": ""
+    }
+  ],
+  "piiCols": []
+}

@@ -1,0 +1,93 @@
+{
+  "catalog": "iceberg",
+  "schema": "ballistar",
+  "table": "etl_money_flow",
+  "columns": [
+    {
+      "name": "account_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "role_name",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "server_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "country_code",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "transaction_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "money_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "flow_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "action_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "money_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "before_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "after_value",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "transaction_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "item_tid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "source_detailed",
+      "type": "varchar",
+      "nullable": ""
+    }
+  ],
+  "piiCols": []
+}

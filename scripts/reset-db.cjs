@@ -16,7 +16,9 @@ function sh(cmd, args, opts = {}) {
 const compose = ['compose', '-f', 'infra/docker-compose.yml', 'exec', '-T', 'postgres'];
 
 console.log('[reset-db] dropping + recreating bedrock database');
-sh('docker', [...compose, 'dropdb',   '-U', 'bedrock', '--if-exists', 'bedrock']);
+// `--force` (PG 13+) terminates active connections before dropping so a
+// running `pnpm dev` (catalog-api + query-svc) does not block the reset.
+sh('docker', [...compose, 'dropdb',   '-U', 'bedrock', '--if-exists', '--force', 'bedrock']);
 sh('docker', [...compose, 'createdb', '-U', 'bedrock', 'bedrock']);
 
 console.log('[reset-db] applying migrations');

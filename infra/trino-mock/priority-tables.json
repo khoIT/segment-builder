@@ -1,5 +1,5 @@
 {
-  "_comment": "Tables refresh-mocks pulls schema + sample rows from. One key per Trino schema.",
+  "_comment": "Tables refresh-mocks pulls schema + sample rows from. One key per Trino schema. ballistar discovered via probe-ballistar.ts (24 tables; we mirror the cfm_vn essentials).",
   "cfm_vn": [
     "etl_login",
     "etl_logout",
@@ -9,6 +9,16 @@
     "etl_match_net_work_stats",
     "etl_appsflyer_installs_datalocker",
     "etl_new_register",
+    "std_master_user_profile"
+  ],
+  "ballistar": [
+    "etl_login",
+    "etl_logout",
+    "etl_recharge",
+    "etl_money_flow",
+    "etl_install",
+    "etl_register",
+    "etl_inapp_event",
     "std_master_user_profile"
   ]
 }
