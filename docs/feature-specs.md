@@ -64,12 +64,11 @@ Bedrock's IA stays in the three existing groups and adds a fourth (Automation) i
 
 | Screen | MVP | Phase 2 |
 |---|---|---|
-| **Sources** | list connectors, status, cadence, volume | 4-tab detail (Datasets/Agents/Coverage/History) |
-| **Mapping Studio** | raw→standardized column mapping; manual confirm | auto-mapping suggestions from schema profiling |
-| **Master Tables** | standardized tables browser, schema + row counts | column-level lineage back to raw sources |
+| **Sources** | list connectors, status, cadence, volume; Add Connector flow | 4-tab detail (Datasets/Agents/Coverage/History) |
+| **Data Catalog** | raw + master tables browser with column profiles, sample rows, lineage chips, "Build Metric" CTA on raw_event tables | schema auto-profiling, auto-mapping suggestions |
 | **Metrics Catalog** | metric CRUD, formula, SQL, owner, cadence, freshness | certified vs experimental flag, Metric Tree (lineage graph) |
 | **Freshness & SLAs** | per-table freshness, SLA status | drift alerts, anomaly detection (via Agents) |
-| **Raw Explorer** | read-only schema + sample rows | search over all raw fields |
+| **Metric Builder** | wizard: multi-source pick + join-key + window + aggregation; URL deeplink from Data Catalog | auto-compile to SQL, schedule picker, cost display |
 | **Knowledge Base** | — | living data dictionary, pinned facts per category |
 
 ### 3.2 Intelligence (Phase 2 only)
@@ -115,16 +114,17 @@ MVP ships no Intelligence group (deferred). The segment builder in MVP uses only
 
 ### 4.1 What ships
 
-1. **Register raw tables.** Point-and-connect to existing warehouse (BigQuery primary; Trino/Iceberg readable). Auto-profile: columns, types, row count, partition key, freshness signal.
-2. **Mapping Studio (manual).** Map raw columns to standardized names per master table. Confirm → materialize as a view or scheduled table.
-3. **Metrics Catalog.** Define a metric by (formula DSL OR raw SQL) + time grain + owner + cadence + freshness SLA. Support the four categories seeded from Presto analysis: Engagement, Monetization, Retention, Quality.
-4. **Auto-compute metrics.** Scheduler runs daily (and hourly for a whitelist) → writes to `metric_daily` / `metric_hourly` tables. Incremental where cheap; full refresh on schema change.
-5. **Segment Builder (visual canvas + sidebar variants only).** Filters: raw columns, metric thresholds, game tabs (PTG/CFM/TFB), cohort windows. Three compute modes preserved: **frozen** (one-time), **scheduled** ($1.20/d), **live** ($8.40/d) with cost visible inline.
-6. **Live Monitor (basic).** Per-segment: size-over-time, membership delta, frozen-vs-live drift placeholder.
-7. **Push to 2 destinations.** CSV drop to S3/GCS + generic webhook. Every push writes a **push manifest** row (critical for Phase 2 closed loop — don't skip this in MVP).
-8. **Freshness & SLA surface.** Passive dashboard; failed SLAs raise a visible badge.
-9. **RBAC (4 personas).** Per-page allow/deny list matches the current prototype.
-10. **Three games only.** PTG / CFM / TFB. ₫ VND currency.
+1. **Sources page.** Connector card list + Add Connector flow. `connectors` table seeded with 3 demo connectors. Mock backend ready for real warehouse drivers.
+2. **Data Catalog.** Raw + master tables browser with schema inspection, sample rows (200-row cap), column profiles, lineage chips. "Build Metric" CTA on raw_event tables deeplinks to Metric Builder wizard.
+3. **Metric Builder wizard.** Multi-source picker (1-3 tables with INNER JOINs) + join-key selector + window picker + aggregation + schedule. MetricSpec v2 contract supports expanded source join patterns. Backward-compat normalizer handles old `cohort` shape.
+4. **Metrics Catalog.** Define a metric by (formula DSL OR raw SQL) + time grain + owner + cadence + freshness SLA. Support the four categories seeded from Presto analysis: Engagement, Monetization, Retention, Quality.
+5. **Auto-compute metrics.** M1 (commit `c15ee78`) shipped real MetricSpec → SQL compiler + materializer (writes `metric_<id>_values` Postgres tables) + pg-boss scheduler (cron in `metric_pipelines.schedule`). 260426-0110 extends compiler to multi-source INNER JOINs. Demo cron `*/5 * * * *`; prod default `0 2 * * *`. Incremental refresh + retry/backoff is M3 (master-plan P12–P13).
+6. **Segment Builder (visual canvas + sidebar variants only).** Filters: raw columns, metric thresholds, game tabs (PTG/CFM/TFB), cohort windows. Three compute modes preserved: **frozen** (one-time), **scheduled** ($1.20/d), **live** ($8.40/d) with cost visible inline.
+7. **Live Monitor (basic).** Per-segment: size-over-time, membership delta, frozen-vs-live drift placeholder.
+8. **Push to 2 destinations.** CSV drop to S3/GCS + generic webhook. Every push writes a **push manifest** row (critical for Phase 2 closed loop — don't skip this in MVP).
+9. **Freshness & SLA surface.** Passive dashboard; failed SLAs raise a visible badge.
+10. **RBAC (4 personas).** Per-page allow/deny list matches the current prototype.
+11. **Three games + Ballistar.** PTG / CFM / TFB (primary); Ballistar seeded in catalog for multi-game data structure validation. ₫ VND currency.
 
 ### 4.2 Acceptance criteria
 
@@ -155,8 +155,8 @@ Each of these is a real user need. Phase 2 gets them in priority order.
 
 ### 4.4 MVP data-service work — the hard parts (flag for leadership)
 
-1. **Metric DSL and compiler.** We must choose: (a) dbt-native (metrics live as dbt models), (b) MetricFlow / Cube-style semantic layer, or (c) a minimal in-house compiler. Recommendation: **dbt metrics** — low risk, team-familiar, integrates with existing warehouse, and side-steps another piece of infra. Cost: loses some NL-friendliness in Phase 2 (workaround: generate dbt on the fly).
-2. **Scheduler.** Dagster vs Airflow vs "just cron in k8s". Metrics-as-assets argues for **Dagster**; team familiarity argues for **Airflow**. Recommendation: Dagster for the metric layer, keep Airflow for existing ingest until it decays.
+1. **Metric compiler.** Shipped: in-house compiler at `apps/query-svc/src/driver/sql-builder/metric.builder.ts` — emits Postgres-dialect SQL with parameterised filters + identifier whitelist + INNER JOIN for multi-source. Open: BigQuery / Trino dialect support is Q3 (today's dev DB is Postgres + local cfm_vn mirror). Phase 2 may layer dbt/MetricFlow for lineage + NL-friendliness.
+2. **Scheduler.** Shipped: pg-boss in `pgboss` schema; cron stored in `metric_pipelines.schedule`; 3-failure auto-flag. Open: incremental refresh + retry/backoff + SLA-driven alerting (M3 phases P12–P13 in master plan). Dagster reconsidered Phase 2 if cross-team orchestration becomes warranted.
 3. **Incremental compute strategy.** Daily metrics on 4.8B-row PTG logs cannot full-refresh. Partition pruning + incremental upserts by `event_date`. Write a `metric_compile` audit row per run with cost + rows read so we can catch runaway queries before the bill.
 4. **Identity at push time.** Which field does each destination want? S3/CSV is flexible; webhooks are destination-specific. Even in MVP we need an **id_namespace** on every push manifest so Phase 2 can resolve outcomes. Lock this down at MVP scope — it is the single most load-bearing decision for the closed loop.
 5. **Cost blast radius.** Live-mode segment = query every lookup. Need hard per-segment daily budget with a kill-switch. Estimated worst-case bill without a cap: ~$300/day per misbehaving live segment.

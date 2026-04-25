@@ -47,10 +47,10 @@ All 6 steps must work for a LiveOps PM to ship a re-engagement campaign without 
 
 | Step | Surface | Status | Notes |
 |---|---|---|---|
-| 1 | Sources page · RawExplorer · Trino driver · `iceberg.cfm_vn.*` | ✓ Working | Live Trino + JSONL mock; sample reads cap at 200 rows |
-| 1.5 | Local cfm_vn-shaped raw event tables (`raw_etl_*` × 5) | ✓ New | Simulator produces 700K rows in ~17s; deterministic |
-| 2 | Mapping Studio | △ Partial | Visual mapping of raw → standard schema exists, but doesn't generate metrics — only `master_user_profile_dx` wide tables |
-| 3 | `Save & Build` flow | △ Partial | One-shot build, no schedule; no incremental; no retry |
+| 1 | Sources page · Data Catalog (raw table inspector) · Trino driver · `iceberg.cfm_vn.*` | ✓ Working | Live Trino + JSONL mock; sample reads cap at 200 rows; raw-table inspection moved to Data Catalog drawer (M1 260426) |
+| 1.5 | Local cfm_vn-shaped raw event tables (`raw_etl_*` × 5) | ✓ New | Simulator produces 700K rows in ~17s; deterministic; drip-mode daemon (pnpm sim:drip) appends ~500 rows/min capped 100K |
+| 2 | Metric Builder wizard + MetricSpec compiler | ✓ Working | M1 (c15ee78): wizard → POST /metrics → SQL gen → materialize. 260426-0110: multi-source (1–3 tables) + INNER JOIN + URL pre-fill from Data Catalog `Build Metric` CTA |
+| 3 | pg-boss scheduler + `Run now` | ✓ Working | M1: cron schedule stored in `metric_pipelines.schedule`, fires via pg-boss; 3-failure auto-flag. Missing: incremental refresh + retry/backoff (G2 residual) |
 | 4 | Data Catalog · 16 tables · 195 cols · lineage chips | ✓ Working | 8 tables real-data-derived; lineage join from `metric_source_bindings`; column profile popover with 24h cache |
 | 4 | Metrics Catalog | ✓ Working | 25 metrics seeded with `cfm` source bindings |
 | 5 | Segment Builder canvas | △ Partial | Visual node editor exists, but metrics aren't pluggable as filters at runtime — labels are hand-coded |
@@ -63,30 +63,14 @@ All 6 steps must work for a LiveOps PM to ship a re-engagement campaign without 
 
 ### Tier-1 gaps (block the core loop)
 
-#### G1. **No-code metric authoring over raw events**
+#### G1. **No-code metric authoring over raw events** — ✅ Closed
 
-**Today:** Mapping Studio creates `master_user_profile_dx` wide tables — already aggregated per-user dimensions. Metrics Catalog displays already-defined metric semantics, but to add a new metric a developer hand-writes a `metric_source_binding` and seeds it.
+**Status (post-260426-0110):** Closed end-to-end. M1 (commit `c15ee78`) shipped MetricSpec contract, SQL compiler (`apps/query-svc/src/driver/sql-builder/metric.builder.ts`), materializer, and pg-boss scheduler. 260426-0110 extended MetricSpec to support 1–3 source tables with INNER JOINs (back-compat normalizer for legacy single-cohort specs) + multi-source UI step + URL pre-fill from Data Catalog. Verified live: POST `/metrics` → 201 → manual `Run now` materializes ~2K rows in <100ms; cron-scheduled runs append automatically.
 
-**Needed:** A "metric builder" UI where a LiveOps PM:
-1. Picks a raw event table (`etl_recharge`)
-2. Sees 10 sample rows
-3. Picks an aggregation (`SUM(imoney_us)`)
-4. Picks a window (`last 7 days`)
-5. Picks a key (`vopenid`)
-6. Hits **Save & Schedule**
-7. Bedrock generates SQL, registers a metric, schedules a daily refresh, and surfaces it in Metrics Catalog + Segment Builder
-
-**Implementation sketch:**
-- New page: `metric-builder/` (parallel to `data-catalog/`)
-- Builds a `MetricSpec` (extension of the existing MappingSpec) containing:
-  - `cohort` (raw table + key column)
-  - `aggregation` (fn, args, cast)
-  - `window` (rolling N days OR cohort-relative)
-  - `filters` (raw column predicates)
-  - `schedule` (`cron` or `on_event`)
-- Server-side compiler: `MetricSpec → SQL` (we already have this for MappingSpec — generalize it)
-- Storage: extend `metrics` table with `spec` jsonb + `schedule` text
-- Persist into `metric_pipelines` table; scheduler picks up
+**Residual:**
+- `cohort_relative` window kind still emits placeholder warning — needs JOIN to `master_user_profile_dx.install_date` (M3).
+- No incremental refresh; full table scan per run (G2 follow-up).
+- Aggregation column ambiguity across joined sources resolved client-side as `<alias>.<col>`; zod superRefine forces qualification when needed.
 
 #### G2. **Pipeline scheduler / orchestrator**
 
@@ -186,11 +170,13 @@ Campaigns need experiment groups. The `seed/fixtures` campaigns hint at this but
 
 ---
 
-## What today's PR makes possible (immediately)
+## What the M1 PR (260426-0110) makes possible (immediately)
 
-1. **Metric authoring UI** can be built today against the new `raw_etl_*` tables — column metadata is in `catalog_columns`, sample rows in `catalog_<id>` tables.
-2. **Segment Builder hash filter** already lets users land on the canvas pre-narrowed by a data-catalog table — the natural next click is "use this table to build a metric."
-3. **Lineage chips** already render counts derived from `metric_source_bindings` — adding pipeline-output edges (metric → segment) is a JOIN on `segments.criteria`.
+1. **Sources IA cleanup** — Removed Mapping Studio, Raw Data Explorer, Pipelines (web UI); raw-table inspection moved to Data Catalog drawer with "Build Metric" CTA that deeplinks to Metric Builder wizard. Sources page now shows connector card list + Add Connector flow only.
+2. **Metric Builder auto-fill** — When "Build Metric" is clicked from Data Catalog, the wizard pre-fills the source table and deeplinks via `#source=<table_id>`. Multi-source + join-key picker already in the UI; M2 wires the compiler.
+3. **Metric contract v2** — MetricSpec now supports 1-3 source tables with INNER JOINs; backward-compat normalizer accepts old `cohort` shape. Enables multi-fact metrics (e.g., recharge + login cohort filters in one metric).
+4. **Simulator drip mode** — New `pnpm sim:drip` daemon appends ~500 rows/min to `raw_cfm_etl_recharge` (capped 100K), env-gated via `BEDROCK_SIMULATOR_DRIP=1`. Enables live demo of metric freshness.
+5. **Demo orchestration** — `pnpm demo:reset` bash+cmd wrapper + runbook at `docs/demos/m1-core-workflow.md` resets DB, seeds fixtures, opens Data Catalog focused on raw table. Demo cron `*/5 * * * *` (vs nightly `0 2 * * *` in prod) makes the metric visibly grow against drip data within minutes.
 
 ---
 
