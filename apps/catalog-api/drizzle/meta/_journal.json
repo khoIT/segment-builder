@@ -15,6 +15,13 @@
       "when": 1777103295107,
       "tag": "0001_data_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777106191443,
+      "tag": "0002_raw_events",
+      "breakpoints": true
     }
   ]
 }

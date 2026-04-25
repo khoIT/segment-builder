@@ -1,11 +1,11 @@
 import React from 'react';
 import { T, Icon } from '../theme.jsx';
 import { useDataCatalogLineage } from '../api/hooks.js';
+import { setHash } from '../routing/hash-state.js';
 
 // Lineage chip strip: → N metrics · N features · N segments · N models
-// Click → setPage(target) + write URL hash so the target page can
-// pre-filter (consumed by MetricsCatalog/SegmentBuilder/etc. when wired).
-// Suppressed when count is 0.
+// Click → setPage(target) + setHash(#table=...) so the target page
+// pre-filters via parseHash() / useHashState().
 
 const PAGE_BY_TARGET = {
   metrics:  'metrics',
@@ -15,9 +15,7 @@ const PAGE_BY_TARGET = {
 };
 
 function setHashAndNav(target, tableId, setPage) {
-  const params = new URLSearchParams();
-  params.set('table', tableId);
-  history.replaceState(null, '', `#${params.toString()}`);
+  setHash({ table: tableId });
   setPage?.(PAGE_BY_TARGET[target]);
 }
 

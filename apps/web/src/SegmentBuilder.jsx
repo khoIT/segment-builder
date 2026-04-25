@@ -1,5 +1,7 @@
 import React from 'react';
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
+import { useHashState } from './routing/hash-state.js';
+import { FilterBanner } from './routing/filter-banner.jsx';
 import { GAMES, SEGMENTS, FEATURES, SEGMENT_SERIES } from './data.jsx';
 import { BR_METRICS, BR_METRIC_CATEGORIES } from './bedrockData.jsx';
 
@@ -503,6 +505,8 @@ function SegmentBuilder() {
   const [source, setSource] = React.useState('PTG');
   const [target, setTarget] = React.useState('CFM');
   const canvasRef = React.useRef(null);
+  const hash = useHashState();
+  const tableFilter = hash.table ?? null;
   useLucide(graph + scheduleMode + crossGame);
 
   const updateNode = (id, patch) => setGraph(g => ({ ...g, nodes: { ...g.nodes, [id]: { ...g.nodes[id], ...patch } } }));
@@ -561,6 +565,11 @@ function SegmentBuilder() {
         source={source} onSource={setSource}
         target={target} onTarget={setTarget}
       />
+      {tableFilter && (
+        <div style={{ padding: '8px 16px' }}>
+          <FilterBanner tableFilter={tableFilter} />
+        </div>
+      )}
       <SegmentPreview mode={scheduleMode} />
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <NodePalette onAdd={addNode} />

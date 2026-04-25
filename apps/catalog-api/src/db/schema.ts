@@ -217,6 +217,75 @@ export const freshness = pgTable('freshness_records', {
   byTarget: index('fresh_by_target').on(t.target, t.game),
 }));
 
+// ─── Raw event tables (local mirror of cfm_vn Trino) ───────────────
+// Lean projections — only columns catalog derivations consume. Snake-
+// case + Trino-style names so SELECTs over these match the eventual
+// `iceberg.cfm_vn.*` schemas drop-in. Populated by the simulator at
+// `pnpm seed`; NOT part of the migration journal we want to track here.
+export const rawEtlRecharge = pgTable('raw_etl_recharge', {
+  vopenid: text('vopenid').notNull(),
+  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
+  imoney_us: doublePrecision('imoney_us').notNull(),
+  currency: text('currency'),
+  platid: text('platid'),
+  productid: text('productid'),
+  ds: date('ds').notNull(),
+}, (t) => ({
+  byUser: index('raw_recharge_user').on(t.vopenid),
+  byDs: index('raw_recharge_ds').on(t.ds),
+}));
+
+export const rawEtlLogin = pgTable('raw_etl_login', {
+  vopenid: text('vopenid').notNull(),
+  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
+  country: text('country'),
+  platid: text('platid'),
+  clientversion: text('clientversion'),
+  deviceid: text('deviceid'),
+  ds: date('ds').notNull(),
+}, (t) => ({
+  byUser: index('raw_login_user').on(t.vopenid),
+  byDs: index('raw_login_ds').on(t.ds),
+}));
+
+export const rawEtlLogout = pgTable('raw_etl_logout', {
+  vopenid: text('vopenid').notNull(),
+  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
+  onlinetime: integer('onlinetime'),
+  ds: date('ds').notNull(),
+}, (t) => ({
+  byUser: index('raw_logout_user').on(t.vopenid),
+}));
+
+export const rawEtlGameDetail = pgTable('raw_etl_game_detail', {
+  playeropenid: text('playeropenid').notNull(),
+  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
+  gameresult: text('gameresult'),
+  killflag: integer('killflag'),
+  score: integer('score'),
+  gameduration: integer('gameduration'),
+  ds: date('ds').notNull(),
+}, (t) => ({
+  byUser: index('raw_game_user').on(t.playeropenid),
+}));
+
+export const rawStdMasterUserProfile = pgTable('raw_std_master_user_profile', {
+  vopenid: text('vopenid').primaryKey(),
+  install_time: timestamp('install_time', { withTimezone: true }).notNull(),
+  last_login_time: timestamp('last_login_time', { withTimezone: true }),
+  last_charge_time: timestamp('last_charge_time', { withTimezone: true }),
+  first_country_code: text('first_country_code'),
+  first_os: text('first_os'),
+  media_source: text('media_source'),
+  total_rev: doublePrecision('total_rev').notNull().default(0),
+  // Retention flags + churn risk (catalog-aware, not in real cfm_vn).
+  is_retained_d1: boolean('is_retained_d1').notNull().default(false),
+  is_retained_d7: boolean('is_retained_d7').notNull().default(false),
+  is_retained_d30: boolean('is_retained_d30').notNull().default(false),
+  churn_prob: doublePrecision('churn_prob').notNull().default(0),
+  days_since_active: integer('days_since_active').notNull().default(0),
+});
+
 // ─── Data Catalog metadata (phase 01) ───────────────────────────────
 // catalog_tables / catalog_columns / column_profiles back the new
 // browse-only Data Catalog page. Per-table physical Postgres tables

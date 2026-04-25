@@ -2,6 +2,8 @@ import React from 'react';
 import { T, Icon, Button, Card, Input, Select, Switch, SectionHeader, Sparkline } from './theme.jsx';
 import { BR_METRIC_CATEGORIES } from './bedrockData.jsx';
 import { useMetrics } from './api/hooks.js';
+import { useHashState, setHash } from './routing/hash-state.js';
+import { FilterBanner } from './routing/filter-banner.jsx';
 import { METRIC_TOP_GROUPS, seriesForMetric, last7dAvg, delta7d, formatMetricValue } from './metrics-mock-series.jsx';
 import { MetricsCatalogDetail } from './metrics-catalog-detail.jsx';
 import { MetricsCatalogCompare } from './metrics-catalog-compare.jsx';
@@ -279,8 +281,9 @@ function NewMetricModal({ onClose }) {
 
 // ─── Page controller — list ↔ detail ↔ compare ─────────────────────────
 function MetricsCatalog({ setPage }) {
+  const hash = useHashState();
   const [group, setGroup] = React.useState('all');
-  const [search, setSearch] = React.useState('');
+  const [search, setSearch] = React.useState(hash.q ?? '');
   const [selected, setSelected] = React.useState(null);
   const [showNew, setShowNew] = React.useState(false);
   const [pinned, togglePin] = usePinnedMetrics();
@@ -289,6 +292,9 @@ function MetricsCatalog({ setPage }) {
   const [compareMode, setCompareMode] = React.useState(false);
   const [compareSelection, setCompareSelection] = React.useState(() => new Set());
   const [compareView, setCompareView] = React.useState(false);
+  // Filter banner: when arriving via lineage chip we narrow to metrics
+  // that reference the source data-catalog table.
+  const tableFilter = hash.table ?? null;
 
   // Live API or fallback to BR_METRICS via api/hooks.js
   const metricsQ = useMetrics();
@@ -347,6 +353,11 @@ function MetricsCatalog({ setPage }) {
     if (group !== 'all' && m.topGroup !== group) return false;
     if (realtimeOnly && !m.realtime) return false;
     if (statusFilter !== 'all' && m.status !== statusFilter) return false;
+    if (tableFilter) {
+      // Match metrics whose source/masterTable references the table id.
+      const ref = (m.source ?? '') + ' ' + (m.masterTable ?? '');
+      if (!ref.toLowerCase().includes(tableFilter.toLowerCase())) return false;
+    }
     if (search) {
       const q = search.toLowerCase();
       if (!m.name.toLowerCase().includes(q) && !prettyName(m.name).toLowerCase().includes(q)) return false;
@@ -393,6 +404,8 @@ function MetricsCatalog({ setPage }) {
             <Button variant="neutral" leftIcon="plus" onClick={() => setShowNew(true)}>New Metric</Button>
           </>}
         />
+
+        <FilterBanner tableFilter={tableFilter} />
 
         <Input
           size="default"

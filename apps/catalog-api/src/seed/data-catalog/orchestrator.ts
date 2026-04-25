@@ -4,6 +4,8 @@ import type { Pool } from 'pg';
 import * as schema from '../../db/schema';
 import { CATALOG_SPECS, TOTAL_COLUMNS, TOTAL_ROWS, type CatalogTableSpec, type ColType } from './specs';
 import { generateRows, type GeneratedRow } from './generate-synthetic';
+import { simulateRawEvents } from './simulate-raw-events';
+import { LOCAL_DERIVATIONS, deriveFromLocal, type DerivationName } from './derive-from-local';
 
 // Maps spec ColType → Postgres column type for the per-table physical
 // table. Identifier-whitelisted by spec definition (kebab-free names).
@@ -104,6 +106,10 @@ export async function seedDataCatalog(db: NodePgDatabase<typeof schema>, pool: P
   // eslint-disable-next-line no-console
   console.log(`[seed:catalog] ${CATALOG_SPECS.length} tables · ${TOTAL_COLUMNS} columns · ${TOTAL_ROWS.toLocaleString()} target rows`);
 
+  // Step 0: simulate the raw event tables (cfm_vn-shaped, local-only).
+  // 8 of 16 catalog tables derive from these via INSERT...SELECT.
+  await simulateRawEvents(pool);
+
   // drizzle-kit doesn't model the 16 ad-hoc data tables; we issue raw
   // CREATE/INSERT via pg pool directly. Identifier whitelist
   // (^[a-z0-9_]+$) on every spec id + column name guards injection.
@@ -111,10 +117,32 @@ export async function seedDataCatalog(db: NodePgDatabase<typeof schema>, pool: P
     const t0 = Date.now();
     await ensurePhysicalTable(pool, spec);
     await upsertMetadata(db, spec);
-    const rows = generateRows(spec);
-    await bulkInsert(pool, spec, rows);
+
+    let rows = 0;
+    let mode: 'local' | 'synthetic' = 'synthetic';
+    if (LOCAL_DERIVATIONS.has(spec.id as DerivationName)) {
+      try {
+        rows = await deriveFromLocal(pool, spec.id as DerivationName);
+        mode = 'local';
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(`[seed:catalog] derive ${spec.id} failed (${(e as Error).message}); falling back to synthetic`);
+      }
+    }
+    if (mode === 'synthetic') {
+      const generated = generateRows(spec);
+      await bulkInsert(pool, spec, generated);
+      rows = generated.length;
+    }
+
+    // Update authoritative row_count metadata to actual rows inserted.
+    await pool.query(
+      `UPDATE catalog_tables SET row_count = $1 WHERE id = $2`,
+      [rows, spec.id],
+    );
+
     // eslint-disable-next-line no-console
-    console.log(`[seed:catalog]  ${spec.id.padEnd(28)} ${spec.rowCount.toLocaleString().padStart(9)} rows · ${Date.now() - t0}ms`);
+    console.log(`[seed:catalog]  ${spec.id.padEnd(28)} ${rows.toLocaleString().padStart(9)} rows · ${mode.padEnd(9)} · ${Date.now() - t0}ms`);
   }
   // eslint-disable-next-line no-console
   console.log('[seed:catalog] done');

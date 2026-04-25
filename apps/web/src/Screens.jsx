@@ -3,6 +3,8 @@ import { LineChart as LC2, Line as Ln2, AreaChart as AC2, Area as Ar2, BarChart 
 import { T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline } from './theme.jsx';
 import { LineageDrawer } from './LineageDrawer.jsx';
 import { GAMES, CONNECTORS, TABLES, FEATURES, MODELS, SEGMENTS, CAMPAIGNS, SAMPLE_ROWS } from './data.jsx';
+import { useHashState } from './routing/hash-state.js';
+import { FilterBanner } from './routing/filter-banner.jsx';
 
 /* global React, Recharts, T, CHART, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Avatar, Kpi, SectionHeader, Sparkline, CONNECTORS, TABLES, FEATURES, MODELS, CAMPAIGNS, SEGMENTS, GAMES, SAMPLE_ROWS */
 
@@ -232,7 +234,16 @@ LIMIT 1000;`);
 function FeatureBuilder() {
   // undefined = drawer closed; null = open with picker; feature object = open focused
   const [lineage, setLineage] = React.useState(undefined);
+  const hash = useHashState();
+  const tableFilter = hash.table ?? null;
   useLucide(lineage);
+  // Filter feature list by source table when arriving via lineage chip.
+  const visibleFeatures = tableFilter
+    ? FEATURES.filter((f) => {
+        const ref = (f.source ?? '') + ' ' + (f.tables ?? []).join(' ') + ' ' + (f.derivedFrom ?? '');
+        return ref.toLowerCase().includes(tableFilter.toLowerCase());
+      })
+    : FEATURES;
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SectionHeader eyebrow="Step 2 · Features"
@@ -242,6 +253,8 @@ function FeatureBuilder() {
           <Button variant="outline" size="sm" leftIcon="git-compare" onClick={() => setLineage(null)}>Lineage</Button>
           <Button variant="primary" size="sm" leftIcon="plus">New feature</Button>
         </>} />
+
+      <FilterBanner tableFilter={tableFilter} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         <Kpi label="Features" value={FEATURES.length} sub="7 prod · 3 staging" icon="layers" />
@@ -253,7 +266,7 @@ function FeatureBuilder() {
       <Card padding={0}>
         <div style={{ padding: '14px 18px', borderBottom: `1px solid ${T.n200}`, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: T.fSans, fontSize: 13, fontWeight: 600, color: T.n900 }}>Feature registry</span>
-          <Badge variant="secondary">{FEATURES.length}</Badge>
+          <Badge variant="secondary">{visibleFeatures.length}</Badge>
           <div style={{ flex: 1 }} />
           <Input size="sm" leftIcon="search" placeholder="Search features…" style={{ width: 220 }} />
           <Select size="sm" value="all" onChange={() => {}} options={[{ value: 'all', label: 'All games' }, { value: 'PTG', label: 'PTG' }, { value: 'CFM', label: 'CFM' }, { value: 'TFB', label: 'TFB' }]} />
@@ -267,7 +280,7 @@ function FeatureBuilder() {
             </tr>
           </thead>
           <tbody>
-            {FEATURES.map(f => (
+            {visibleFeatures.map(f => (
               <tr key={f.id}
                   onClick={() => setLineage(f)}
                   title={`Open lineage for ${f.name}`}
