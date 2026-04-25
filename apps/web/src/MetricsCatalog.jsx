@@ -1,6 +1,7 @@
 import React from 'react';
 import { T, Icon, Button, Card, Input, Select, Switch, SectionHeader, Sparkline } from './theme.jsx';
-import { BR_METRICS, BR_METRIC_CATEGORIES } from './bedrockData.jsx';
+import { BR_METRIC_CATEGORIES } from './bedrockData.jsx';
+import { useMetrics } from './api/hooks.js';
 import { METRIC_TOP_GROUPS, seriesForMetric, last7dAvg, delta7d, formatMetricValue } from './metrics-mock-series.jsx';
 import { MetricsCatalogDetail } from './metrics-catalog-detail.jsx';
 import { MetricsCatalogCompare } from './metrics-catalog-compare.jsx';
@@ -289,14 +290,18 @@ function MetricsCatalog({ setPage }) {
   const [compareSelection, setCompareSelection] = React.useState(() => new Set());
   const [compareView, setCompareView] = React.useState(false);
 
+  // Live API or fallback to BR_METRICS via api/hooks.js
+  const metricsQ = useMetrics();
+  const allMetrics = metricsQ.data?.items ?? [];
+
   const selectedMetric = React.useMemo(
-    () => (selected ? BR_METRICS.find(m => m.id === selected) : null),
-    [selected]
+    () => (selected ? allMetrics.find(m => m.id === selected) : null),
+    [selected, allMetrics]
   );
 
   const compareMetrics = React.useMemo(
-    () => BR_METRICS.filter(m => compareSelection.has(m.id)),
-    [compareSelection]
+    () => allMetrics.filter(m => compareSelection.has(m.id)),
+    [compareSelection, allMetrics]
   );
 
   // ── Compare view route ─────────────────────────────────────────────
@@ -338,7 +343,7 @@ function MetricsCatalog({ setPage }) {
   }
 
   // Filter, then sort: pinned first (preserve original order within each group).
-  const filtered = BR_METRICS.filter(m => {
+  const filtered = allMetrics.filter(m => {
     if (group !== 'all' && m.topGroup !== group) return false;
     if (realtimeOnly && !m.realtime) return false;
     if (statusFilter !== 'all' && m.status !== statusFilter) return false;

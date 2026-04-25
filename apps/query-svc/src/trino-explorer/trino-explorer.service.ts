@@ -45,7 +45,17 @@ export class TrinoExplorerService {
   async listSchemas(catalog?: string): Promise<SchemaList> {
     const cat = catalog ?? this.cfg.get<string>('TRINO_CATALOG') ?? 'iceberg';
     if (this.isTrino()) {
-      const r = await runTrino(this.trino(), `SHOW SCHEMAS FROM ${quoteIdent(cat)}`, [], 1000);
+      // information_schema.schemata is portable + tolerates quoting that
+      // `SHOW SCHEMAS FROM "iceberg"` chokes on (returns empty silently).
+      // Pass catalog as a string literal — quoteIdent isn't applicable
+      // since this is a value, not an identifier.
+      const safeCat = cat.replace(/'/g, "''");
+      const r = await runTrino(
+        this.trino(),
+        `SELECT schema_name FROM "${safeCat}"."information_schema"."schemata" ORDER BY schema_name`,
+        [],
+        1000,
+      );
       return { items: r.rows.map((row) => String(row[0])) };
     }
     // Mock: list dirs under data/

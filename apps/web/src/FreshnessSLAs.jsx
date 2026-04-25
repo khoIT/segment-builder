@@ -1,8 +1,8 @@
 import React from 'react';
 import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
-import { BR_FRESHNESS } from './bedrockData.jsx';
+import { useFreshness } from './api/hooks.js';
 
-/* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline, BR_FRESHNESS */
+/* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, Sparkline */
 
 // ═══════════════════════════════════════════════════════════════════════
 // FRESHNESS & SLAs — declare SLAs per master table / metric, track breaches
@@ -59,15 +59,18 @@ function FreshnessSLAs() {
   const [typeFilter, setTypeFilter] = React.useState('all');
   useLucide(filter + typeFilter);
 
-  const list = BR_FRESHNESS.filter(f => {
+  const freshnessQ = useFreshness();
+  const all = freshnessQ.data?.items ?? [];
+
+  const list = all.filter(f => {
     if (filter !== 'all' && f.status !== filter) return false;
     if (typeFilter !== 'all' && f.type !== typeFilter) return false;
     return true;
   });
 
-  const breach = BR_FRESHNESS.filter(f => f.status === 'breach').length;
-  const warning = BR_FRESHNESS.filter(f => f.status === 'warning').length;
-  const healthy = BR_FRESHNESS.filter(f => f.status === 'healthy').length;
+  const breach = all.filter(f => f.status === 'breach').length;
+  const warning = all.filter(f => f.status === 'warning').length;
+  const healthy = all.filter(f => f.status === 'healthy').length;
 
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'auto', background: T.n50 }}>
@@ -81,7 +84,7 @@ function FreshnessSLAs() {
         </>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <Kpi label="Tracked targets" value={BR_FRESHNESS.length} sub={`${BR_FRESHNESS.filter(f=>f.type==='table').length} tables · ${BR_FRESHNESS.filter(f=>f.type==='metric').length} metrics`} icon="timer" />
+        <Kpi label="Tracked targets" value={all.length} sub={`${all.filter(f=>f.type==='table').length} tables · ${all.filter(f=>f.type==='metric').length} metrics`} icon="timer" />
         <div style={{ padding: 18, borderRadius: 10, background: '#fff', border: `1px solid ${breach ? T.red600 : T.n200}`, boxShadow: breach ? '0 0 0 4px rgba(220,38,38,0.08)' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <div style={{ width: 8, height: 8, borderRadius: 9999, background: T.red600, animation: breach ? 'pulse-dot 1.6s infinite' : 'none', boxShadow: `0 0 0 4px ${T.red600}30` }} />
