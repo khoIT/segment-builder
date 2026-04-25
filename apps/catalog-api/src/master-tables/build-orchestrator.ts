@@ -1,0 +1,154 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+import { masterTables, buildJobs, mappings, masterUserProfileDx } from '../db/schema';
+import type { Db } from '../db/client';
+import { InjectDb } from '../db/client';
+
+// Build flow:
+//   POST /master-tables/:id/build → orchestrator.start(masterTableId)
+//     1. insert build_jobs row (status=running)
+//     2. POST QUERY_SVC/q/mappings/execute  (NDJSON stream)
+//     3. batch-insert each chunk into the per-template Postgres table
+//     4. on done: master_tables.row_count, status, columns; finishedAt
+//     5. on error: status=failed, error message
+//
+// Job state lives in build_jobs (durable) plus an in-process Map for
+// real-time progress polling. The orchestrator runs the build async via
+// a fire-and-forget Promise — caller gets the BuildJob row immediately.
+
+@Injectable()
+export class BuildOrchestrator {
+  private readonly log = new Logger(BuildOrchestrator.name);
+  private readonly inFlight = new Map<string, { processedRows: number; totalRows: number | null }>();
+
+  constructor(
+    @InjectDb() private readonly db: Db,
+    private readonly cfg: ConfigService,
+  ) {}
+
+  async start(masterTableId: string, userToken: string): Promise<{ jobId: string }> {
+    const [mt] = await this.db.select().from(masterTables).where(eq(masterTables.id, masterTableId)).limit(1);
+    if (!mt) throw new NotFoundException('master-table not found');
+    if (!mt.mappingId) throw new NotFoundException('master-table has no mapping');
+
+    const [mapping] = await this.db.select().from(mappings).where(eq(mappings.id, mt.mappingId)).limit(1);
+    if (!mapping) throw new NotFoundException('referenced mapping not found');
+
+    const [job] = await this.db.insert(buildJobs).values({
+      masterTableId,
+      status: 'running',
+      processedRows: 0,
+    }).returning();
+
+    await this.db.update(masterTables).set({ status: 'building', updatedAt: new Date() }).where(eq(masterTables.id, masterTableId));
+    this.inFlight.set(job.id, { processedRows: 0, totalRows: null });
+
+    // Fire-and-forget; status polling endpoint reads build_jobs.
+    void this.runBuild(job.id, masterTableId, mt.templateId, mapping.spec as Record<string, unknown>, userToken)
+      .catch((err) => this.log.error(`build ${job.id} crashed`, err));
+
+    return { jobId: job.id };
+  }
+
+  async status(jobId: string) {
+    const [job] = await this.db.select().from(buildJobs).where(eq(buildJobs.id, jobId)).limit(1);
+    if (!job) throw new NotFoundException('job not found');
+    return job;
+  }
+
+  private async runBuild(
+    jobId: string,
+    masterTableId: string,
+    templateId: string,
+    spec: Record<string, unknown>,
+    userToken: string,
+  ): Promise<void> {
+    const start = Date.now();
+    try {
+      const querySvc = this.cfg.get<string>('QUERY_SVC');
+      if (!querySvc) {
+        throw new Error('QUERY_SVC env not set; cannot run build (phase 05 wires query-svc)');
+      }
+
+      const res = await fetch(`${querySvc}/api/v1/q/mappings/execute`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ spec, masterTableId, batchSize: 1000 }),
+      });
+      if (!res.ok || !res.body) {
+        throw new Error(`query-svc /q/mappings/execute returned ${res.status}`);
+      }
+
+      // Read NDJSON stream (one JSON row per line). Batch into 1000-row
+      // INSERTs for the per-template wide table.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const batch: Record<string, unknown>[] = [];
+      let processed = 0;
+
+      const flush = async () => {
+        if (!batch.length) return;
+        if (templateId === 'tpl_user_profile_dx') {
+          await this.db.insert(masterUserProfileDx).values(
+            batch.map((r) => ({ ...r, masterTableId })) as never,
+          ).onConflictDoNothing();
+        }
+        // Other templates: phase 06+ adds their physical tables.
+        processed += batch.length;
+        this.inFlight.set(jobId, { processedRows: processed, totalRows: null });
+        await this.db.update(buildJobs).set({ processedRows: processed }).where(eq(buildJobs.id, jobId));
+        batch.length = 0;
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try { batch.push(JSON.parse(line)); } catch { /* swallow malformed line */ }
+          if (batch.length >= 1000) await flush();
+        }
+      }
+      if (buffer.trim()) {
+        try { batch.push(JSON.parse(buffer)); } catch { /* */ }
+      }
+      await flush();
+
+      await this.db.update(buildJobs).set({
+        status: 'completed',
+        finishedAt: new Date(),
+      }).where(eq(buildJobs.id, jobId));
+
+      await this.db.update(masterTables).set({
+        status: 'completed',
+        rowCount: processed,
+        lastBuildAt: new Date(),
+        lastBuildMs: Date.now() - start,
+        columns: ((spec as { outputColumns?: unknown }).outputColumns ?? null) as never,
+        updatedAt: new Date(),
+      }).where(eq(masterTables.id, masterTableId));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.log.error(`[build ${jobId}] ${msg}`);
+      await this.db.update(buildJobs).set({
+        status: 'failed',
+        error: msg,
+        finishedAt: new Date(),
+      }).where(eq(buildJobs.id, jobId));
+      await this.db.update(masterTables).set({
+        status: 'failed',
+        updatedAt: new Date(),
+      }).where(eq(masterTables.id, masterTableId));
+    } finally {
+      this.inFlight.delete(jobId);
+    }
+  }
+}

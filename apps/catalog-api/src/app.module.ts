@@ -13,6 +13,8 @@ import { CatalogModule } from './catalog/catalog.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { SegmentsModule } from './segments/segments.module';
 import { PinsModule } from './pins/pins.module';
+import { MappingsModule } from './mappings/mappings.module';
+import { MasterTablesModule } from './master-tables/master-tables.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { PinsModule } from './pins/pins.module';
     MetricsModule,
     SegmentsModule,
     PinsModule,
+    MappingsModule,
+    MasterTablesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpErrorFilter },
