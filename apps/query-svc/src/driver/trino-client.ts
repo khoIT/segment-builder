@@ -27,7 +27,7 @@ export function makeTrino(cfg: ConfigService): Trino {
     throw new Error('TRINO_USER and TRINO_PASSWORD must be set when QUERY_DRIVER=trino');
   }
   return Trino.create({
-    server: `http://${host}:${port}`,
+    server: `https://${host}:${port}`,
     catalog,
     schema,
     auth: new BasicAuth(user, password),

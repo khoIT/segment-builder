@@ -1,0 +1,1415 @@
+{
+  "catalog": "iceberg",
+  "schema": "cfm_vn",
+  "table": "etl_game_detail",
+  "columns": [
+    {
+      "name": "tdbank_imp_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "worldid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "__tablename",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gamesvrid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dteventtime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "vgameappid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "platid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "izoneareaid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playerid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "level",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "mapid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gametype",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gamemode",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dtgamestarttime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "gameduration",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playerduration",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "survivalduration",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedexp",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totalexp",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedgamepoint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totalgamepoint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedgold",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totalgold",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gaineddiamond",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaldiamond",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "score",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "rankingame",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "damagevalue",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timeskill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timesbekilled",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "chapterid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roundid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "resurrectiontimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "firstgameflag",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "unitid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "difficulty",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gameresult",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isboss",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dropmatchflag",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roomid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dsasvrid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "chapterstar",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "matchmodule",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedhiddenscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totalhiddenscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedladderscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totalladderscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playeropenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playercamp",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "wincamp",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimeskill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimesbekilled",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimesgame",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimeswin",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimeslose",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltimesdraw",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isnewbie",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "hardlevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timesuserebirthcoin",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainclanactivity",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isteam",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "displayweaponid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ischooserandmap",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playergamenick",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "quitreason",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roleid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "getacecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "silveracecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "awardhonorpoint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gameachievementcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gameachievements",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "headshottimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "beenheadshottimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "throwweaponkill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "beenkilledbythrowweapon",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "meleeweaponkill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainpropcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainprops",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ctkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "tkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaltakendamage",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zombieinfecthumancnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killzombiebymelee",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "teckpioint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "topcontinuekill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bulletshotcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bulletshothitcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killflag",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "weakpointdamage",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "winround",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roomcreatetime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "plantc4times",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "defusec4times",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "deadtime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "towercnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "towerlvupcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "towerkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "basehitcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "canignoregamestat",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "plantc4cnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "defusec4cnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "hasclanmemberingame",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timesthrowweapon",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "iscrosszone",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gspzoneid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "breakoutcount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderseason",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderlevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderstage",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "battleid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roomtype",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "rankinds",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "teamnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "teamid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timescore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killlscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "survivalscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "timesassists",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clanid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clanname",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "networkquality",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "lobbyteamid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "avgh1z1score",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "lastavgh1z1score",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "rescuescore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "h1z1seasonid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "knockdowntimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "haveheroweapon",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "rescuecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "destoryvehiclecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "treatval",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "takevehicledistance",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "movedistance",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "maxkilldistance",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roompoolid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "luckyredbagcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "nianredbagcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "survivalmode",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "rebelcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "regularcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "remainrebel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "remainregular",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "open_h1z1_laddermatch",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killpolicecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killclowncnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "occupybriefcasecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "cardusedcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clownlivetime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clownroundcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "groupid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "viplevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "lobbyteamzoneid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "plantpropsnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "recyclepropsnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "destroypropsnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "destroywallnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "evolveexppoint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gamemodetype",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "creditscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "boardscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "displayweaponvlvl",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isinchampion",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isboard",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "realsurvivaltime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killzombiecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "killzombietypecntarr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isbackflowuser",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "doublekillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "triplekillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "quadrakillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pentakillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sniperkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "snipershootcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sniperhitcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sniperhitheadcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "throwweaponhitcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "penetratekillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roundmvpcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderdownlevelscoredelta",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderdownlevelscoreused",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "jumpstarcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "jumpminpasstime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "jumpminlifecost",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "jumpbestcollectcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "jumprankinspeed",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "arenabattleid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "airobotcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pingmax",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pingmin",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pingchangecount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pingover300",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playerdistance",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "courageroomgaindelta",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "couragescore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isairobot",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "warmabtestindex",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isaireplace",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "campkdinfostr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "campopenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roundcount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "lobbyteamplayercount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "scenarioscriptid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "warmrule",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "iswarmmiss",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ailevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "middlejoinflag",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "aistyle",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "recommendwarmtriggerid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bioseason",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bioladderscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "bioladderlevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "penaltypositionrejecttimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "tmbigsupply",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "tmbiggetskill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "tmbigskillkill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attackheadcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attacktrunkcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attacklimbcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "attackothercnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "glasskillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "aisource",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "wangzheweaponcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pveskill",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderlevelbeforematch",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ladderstagebeforematch",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dssetid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "aihostduration",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "aihosttotaltimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fightbackcatattachtimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fightbackcatalive2fightback",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fightbackcatmovedistance",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fightbackhumandistorynums",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asdefenderkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asattackerkillcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asdefendertimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asattackertimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asdefenderwintimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "asattackerwintimes",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "totaldamages",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "grenadedamages",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "flashedcount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "smokedcount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "burneddamages",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gainedbioladderscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ratingplus",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ismaxratingplus",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "kast",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dd",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "adr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "impact",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "kpr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "spr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dpr",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "afterdeathmarkcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isroom",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zoneroomid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "mtsxiongshoucount",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fakeplayerid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "iskinggift",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "enternotwalkablevolumecnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "benotwalkablevolumekilledcnt",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "boxid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "boxstate",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "matchroomid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fightingscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isfightingscorematch",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "needgamematchfeedback",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isfightingscorematch2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "needgamematchfeedback2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ishalfwayjoindropmatch",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertrueskillmu",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertrueskillsigma",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertrueskillscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertoptrueskillmu",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertoptrueskillsigma",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "laddertoptrueskillscore",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_time_with_timezone",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "folder_date",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "ip"
+  ]
+}

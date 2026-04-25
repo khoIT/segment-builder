@@ -1,0 +1,331 @@
+{
+  "catalog": "iceberg",
+  "schema": "cfm_vn",
+  "table": "etl_match_net_work_stats",
+  "columns": [
+    {
+      "name": "log_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "game_svr_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dt_event_time",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "vgame_appid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "plat_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zone_area_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "player_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vopenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "level",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "map_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "packet_lose_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "packet_resend_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "reliable_packet_send_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "jitter",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "up_cmd_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_cmd1",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic_for_cmd1",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_cmd2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic_for_cmd2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_cmd3",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic_for_cmd3",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_cmd4",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic_for_cmd4",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_cmd5",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "uplink_traffic_for_cmd5",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "down_cmd_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_cmd1",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic_for_cmd1",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_cmd2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic_for_cmd2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_cmd3",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic_for_cmd3",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_cmd4",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic_for_cmd4",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_cmd5",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "downlink_traffic_for_cmd5",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "suitable_isp_round_trip_time",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "isp",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "telecom_oper",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "network",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "public_ip_address",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "min_ping",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "max_ping",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "avg_ping",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ping_std_deviation",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isp_stat",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vport",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "network_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "abnormal_ping_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "ping_lost_count",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "is_qos_work",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "reconnect_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "ping_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "kloss_ping",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "abnormal_ping_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "pingdelay_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "pingdelay200_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "pingdelay300_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "pingdelay460_times",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "vopenid",
+    "public_ip_address"
+  ]
+}

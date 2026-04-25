@@ -1,0 +1,166 @@
+{
+  "catalog": "iceberg",
+  "schema": "cfm_vn",
+  "table": "etl_moneyflow",
+  "columns": [
+    {
+      "name": "tdbank_imp_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "worldid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "__tablename",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gamesvrid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dteventtime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "vgameappid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "platid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "izoneareaid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vopenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sequence",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "level",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "aftermoney",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "imoney",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "reason",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "subreason",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "addorreduce",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "imoneytype",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "source",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "serial",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "delta",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "balance",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "viplevel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "transactionid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "billno",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "subreasonbiguint",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playerid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_time_with_timezone",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "folder_date",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "ip",
+    "vopenid"
+  ]
+}

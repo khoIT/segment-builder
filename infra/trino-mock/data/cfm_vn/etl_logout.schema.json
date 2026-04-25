@@ -1,0 +1,242 @@
+{
+  "catalog": "iceberg",
+  "schema": "cfm_vn",
+  "table": "etl_logout",
+  "columns": [
+    {
+      "name": "tdbank_imp_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "worldid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "__tablename",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "gamesvrid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dteventtime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "platid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "izoneareaid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vopenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "roleid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "onlinetime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "level",
+      "type": "integer",
+      "nullable": ""
+    },
+    {
+      "name": "playerfriendsnum",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clientversion",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "systemsoftware",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "systemhardware",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "telecomoper",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "network",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "screenwidth",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "screenhight",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "density",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "loginchannel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "cpuhardware",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "memory",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "glrender",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "glversion",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "deviceid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clientip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "country",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "language",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "appchannel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "systemlanguage",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "xwid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vrolename",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "logouttype",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "imei",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zone",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "isbackflowuser",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "reflowstarttime",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "playerurl",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "clientsdkuserid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vgameappid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_time_with_timezone",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "folder_date",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "ip",
+    "vopenid",
+    "imei"
+  ]
+}

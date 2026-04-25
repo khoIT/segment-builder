@@ -38,7 +38,7 @@ async function main() {
     await mkdir(dir, { recursive: true });
 
     const client = Trino.create({
-      server: `http://${host}:${port}`,
+      server: `https://${host}:${port}`,
       catalog,
       schema,
       auth: new BasicAuth(user, password),

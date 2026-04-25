@@ -1,0 +1,161 @@
+{
+  "catalog": "iceberg",
+  "schema": "cfm_vn",
+  "table": "etl_recharge",
+  "columns": [
+    {
+      "name": "dtstatdate",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "dteventtime",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "fofferid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "spoa_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vgameappid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "platid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vopenid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "iamount",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "imoney",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "login_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "pay_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fuin",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zoneid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "user_type",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "sub_channel_id",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fextreserve1",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "currency",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "imoney_source",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "imoney_us",
+      "type": "double",
+      "nullable": ""
+    },
+    {
+      "name": "user_ip",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "productid",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "fsequence_no",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "zoneid2",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "requrl",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "event_time_with_timezone",
+      "type": "timestamp(6) with time zone",
+      "nullable": ""
+    },
+    {
+      "name": "payment_channel",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "vng_transaction",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "folder_date",
+      "type": "date",
+      "nullable": ""
+    },
+    {
+      "name": "raw_date",
+      "type": "varchar",
+      "nullable": ""
+    },
+    {
+      "name": "ds",
+      "type": "date",
+      "nullable": ""
+    }
+  ],
+  "piiCols": [
+    "vopenid",
+    "user_ip"
+  ]
+}
