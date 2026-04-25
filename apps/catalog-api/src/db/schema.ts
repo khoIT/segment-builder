@@ -217,85 +217,13 @@ export const freshness = pgTable('freshness_records', {
   byTarget: index('fresh_by_target').on(t.target, t.game),
 }));
 
-// ─── Raw event tables (local mirror of cfm_vn Trino) ───────────────
-// Lean projections — only columns catalog derivations consume. Snake-
-// case + Trino-style names so SELECTs over these match the eventual
-// `iceberg.cfm_vn.*` schemas drop-in. Populated by the simulator at
-// `pnpm seed`; NOT part of the migration journal we want to track here.
-export const rawEtlRecharge = pgTable('raw_etl_recharge', {
-  vopenid: text('vopenid').notNull(),
-  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
-  imoney_us: doublePrecision('imoney_us').notNull(),
-  currency: text('currency'),
-  platid: text('platid'),
-  productid: text('productid'),
-  ds: date('ds').notNull(),
-  gameId: text('game_id').notNull().default('cfm'),
-}, (t) => ({
-  byUser: index('raw_recharge_user').on(t.vopenid),
-  byDs: index('raw_recharge_ds').on(t.ds),
-  byGame: index('raw_recharge_game').on(t.gameId),
-}));
-
-export const rawEtlLogin = pgTable('raw_etl_login', {
-  vopenid: text('vopenid').notNull(),
-  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
-  country: text('country'),
-  platid: text('platid'),
-  clientversion: text('clientversion'),
-  deviceid: text('deviceid'),
-  ds: date('ds').notNull(),
-  gameId: text('game_id').notNull().default('cfm'),
-}, (t) => ({
-  byUser: index('raw_login_user').on(t.vopenid),
-  byDs: index('raw_login_ds').on(t.ds),
-  byGame: index('raw_login_game').on(t.gameId),
-}));
-
-export const rawEtlLogout = pgTable('raw_etl_logout', {
-  vopenid: text('vopenid').notNull(),
-  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
-  onlinetime: integer('onlinetime'),
-  ds: date('ds').notNull(),
-  gameId: text('game_id').notNull().default('cfm'),
-}, (t) => ({
-  byUser: index('raw_logout_user').on(t.vopenid),
-  byGame: index('raw_logout_game').on(t.gameId),
-}));
-
-export const rawEtlGameDetail = pgTable('raw_etl_game_detail', {
-  playeropenid: text('playeropenid').notNull(),
-  dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
-  gameresult: text('gameresult'),
-  killflag: integer('killflag'),
-  score: integer('score'),
-  gameduration: integer('gameduration'),
-  ds: date('ds').notNull(),
-  gameId: text('game_id').notNull().default('cfm'),
-}, (t) => ({
-  byUser: index('raw_game_user').on(t.playeropenid),
-  byGame: index('raw_game_game').on(t.gameId),
-}));
-
-export const rawStdMasterUserProfile = pgTable('raw_std_master_user_profile', {
-  vopenid: text('vopenid').primaryKey(),
-  install_time: timestamp('install_time', { withTimezone: true }).notNull(),
-  last_login_time: timestamp('last_login_time', { withTimezone: true }),
-  last_charge_time: timestamp('last_charge_time', { withTimezone: true }),
-  first_country_code: text('first_country_code'),
-  first_os: text('first_os'),
-  media_source: text('media_source'),
-  total_rev: doublePrecision('total_rev').notNull().default(0),
-  // Retention flags + churn risk (catalog-aware, not in real cfm_vn).
-  is_retained_d1: boolean('is_retained_d1').notNull().default(false),
-  is_retained_d7: boolean('is_retained_d7').notNull().default(false),
-  is_retained_d30: boolean('is_retained_d30').notNull().default(false),
-  churn_prob: doublePrecision('churn_prob').notNull().default(0),
-  days_since_active: integer('days_since_active').notNull().default(0),
-  gameId: text('game_id').notNull().default('cfm'),
-}, (t) => ({
-  byGame: index('raw_profile_game').on(t.gameId),
-}));
+// ─── Raw event tables (per-game, Trino-faithful) ──────────────────
+// Per-game raw tables (raw_cfm_*, raw_blstr_*) are NOT modelled in
+// drizzle — schemas come from the committed JSON under
+// infra/trino-mock/data/<schema>/*.schema.json and the seed creates
+// each table dynamically via CREATE TABLE IF NOT EXISTS at boot. This
+// keeps drizzle decoupled from upstream Trino schema drift (etl_login
+// has 65 cols, etl_game_detail has 230+).
 
 // ─── Data Catalog metadata (phase 01) ───────────────────────────────
 // catalog_tables / catalog_columns / column_profiles back the new
@@ -311,6 +239,9 @@ export const catalogTables = pgTable('catalog_tables', {
   // aggregate (pre-rolled cube / per-user state), master (built via mapping).
   // Drives Metric Builder source filter + Data Catalog layer chip.
   layer: text('layer').notNull().default('aggregate'),
+  // Backref to the pipeline that materialises this catalog table.
+  // Null for synthetic (no Bedrock-tracked transform) and master tables.
+  pipelineId: text('pipeline_id'),
   partitionKeys: jsonb('partition_keys').notNull(),     // string[]
   rowCount: bigint('row_count', { mode: 'number' }).notNull().default(0),
   lastRefreshAt: timestamp('last_refresh_at', { withTimezone: true }),
@@ -323,6 +254,31 @@ export const catalogTables = pgTable('catalog_tables', {
   byCategory: index('catalog_by_category').on(t.category),
   byGame: index('catalog_by_game').on(t.game),
   byLayer: index('catalog_by_layer').on(t.layer),
+}));
+
+// ─── Pipelines ──────────────────────────────────────────────────
+// One row per "raw → catalog" transform. Captures the SQL, the source
+// raw_<game>_<table>(s), and the target catalog table so the new
+// Pipelines page (renamed from Mapping Studio) can render a flow.
+export const pipelines = pgTable('pipelines', {
+  id: text('id').primaryKey(),                         // 'pipe_cfm_revenue'
+  name: text('name').notNull(),                        // human label
+  gameId: text('game_id'),                             // 'cfm'|'blstr'|null (cross-game)
+  sourceTables: jsonb('source_tables').notNull(),      // string[] of raw_*_* names
+  targetTableId: text('target_table_id').notNull()
+    .references(() => catalogTables.id, { onDelete: 'cascade' }),
+  transformSql: text('transform_sql').notNull(),
+  kind: text('kind').notNull().default('derive'),      // derive|map|materialize
+  schedule: text('schedule').notNull().default('manual'),
+  status: text('status').notNull().default('idle'),    // idle|running|succeeded|failed
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+  lastRowCount: integer('last_row_count'),
+  lastError: text('last_error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byTarget: index('pipelines_by_target').on(t.targetTableId),
+  byGame: index('pipelines_by_game').on(t.gameId),
 }));
 
 export const catalogColumns = pgTable('catalog_columns', {
@@ -383,6 +339,29 @@ export const masterUserProfileDx = pgTable('master_user_profile_dx', {
 
 // The other 5 templates' physical tables get added in phase 04b when
 // they're actually wired to the build pipeline. KISS — add as needed.
+
+// ─── Connectors (P2: Sources redesign) ──────────────────────────────
+// Mock connector registry. pass_encrypted = base64(plaintext) — MOCK ONLY.
+// Real KMS vault swap planned for Q5. Never return pass_encrypted from API.
+export const connectors = pgTable('connectors', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),                          // 'postgres'|'bigquery'|'s3'|'kafka'
+  name: text('name').notNull(),
+  env: text('env').notNull().default('production'),
+  host: text('host'),
+  port: integer('port'),
+  db: text('db'),
+  user: text('user'),
+  passEncrypted: text('pass_encrypted'),                 // base64(pass) — MOCK ONLY
+  status: text('status').notNull().default('unknown'),   // 'ok'|'fail'|'unknown'
+  lastSyncAt: timestamp('last_sync_at', { withTimezone: true }),
+  datasetCount: integer('dataset_count').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byType: index('connectors_by_type').on(t.type),
+  byStatus: index('connectors_by_status').on(t.status),
+}));
 
 // ─── Metric pipelines (M1: P04) ─────────────────────────────────────
 // Plumbing companion to `metrics`: holds the MetricSpec + schedule +

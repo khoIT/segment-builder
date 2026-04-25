@@ -178,6 +178,7 @@ export class DataCatalogService {
         game: tbl.game,
         category: tbl.category,
         layer: tbl.layer as 'raw_event' | 'aggregate' | 'master',
+        pipelineId: tbl.pipelineId,
         partitionKeys: (tbl.partitionKeys ?? []) as string[],
         rowCount: Number(tbl.rowCount),
         columnCount: colCountByTable.get(tbl.id) ?? 0,
@@ -212,11 +213,17 @@ export class DataCatalogService {
       .orderBy(asc(catalogColumns.ordinal));
     // (sample source resolved below)
 
-    // Sample source depends on origin: synthetic/seed → catalog_<id>;
-    // master-build → master_user_profile_dx scoped by master_table_id.
+    // Sample source depends on layer:
+    //   raw_source  → physical table = id (raw_<game>_<trino_table>)
+    //   master      → master_user_profile_dx scoped by master_table_id
+    //   anything else → catalog_<id> (synthetic + derived)
     let sampleRows: Record<string, unknown>[] = [];
     const sampleColNames = cols.map((c) => c.name);
-    if (tbl.sourceKind === 'master-build' && tbl.sourceRef) {
+    if (tbl.layer === 'raw_source') {
+      const sampleSql = `SELECT * FROM "${id}" LIMIT 10`;
+      const sampleRes = await this.db.execute(sql.raw(sampleSql));
+      sampleRows = (sampleRes.rows ?? []) as Record<string, unknown>[];
+    } else if (tbl.sourceKind === 'master-build' && tbl.sourceRef) {
       const sampleRes = await this.db.execute(sql`
         SELECT * FROM master_user_profile_dx
         WHERE master_table_id = ${tbl.sourceRef}::uuid
@@ -245,6 +252,7 @@ export class DataCatalogService {
       game: tbl.game,
       category: tbl.category,
       layer: tbl.layer as 'raw_event' | 'aggregate' | 'master',
+      pipelineId: tbl.pipelineId,
       partitionKeys: (tbl.partitionKeys ?? []) as string[],
       rowCount: Number(tbl.rowCount),
       columnCount: cols.length,
