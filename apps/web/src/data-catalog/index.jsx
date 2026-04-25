@@ -5,6 +5,7 @@ import { CatalogHeader } from './catalog-header.jsx';
 import { CatalogSearch } from './catalog-search.jsx';
 import { TableRow } from './table-row.jsx';
 import { ColumnsFlatList } from './columns-flat-list.jsx';
+import { ColumnProfileDrawer } from './column-profile-drawer.jsx';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Data Catalog page — browse-only view of catalog_tables / catalog_columns.
@@ -18,7 +19,9 @@ function DataCatalog({ setPage }) {
   const [game, setGame] = React.useState('all');
   const [expandedId, setExpandedId] = React.useState(null);
   const [jumpToColumn, setJumpToColumn] = React.useState(null);
-  useLucide(expandedId, tab);
+  // Page-level profile drawer state. One drawer for the whole page.
+  const [profileTarget, setProfileTarget] = React.useState(null);
+  useLucide(expandedId, tab, profileTarget);
 
   const listQ = useDataCatalog();
   const all = listQ.data?.items ?? [];
@@ -72,6 +75,7 @@ function DataCatalog({ setPage }) {
               jumpToColumn={jumpToColumn?.tableId === t.id ? jumpToColumn.column : null}
               onJumpHandled={() => setJumpToColumn(null)}
               setPage={setPage}
+              onProfile={setProfileTarget}
             />
           ))}
           {tablesFiltered.length === 0 && (
@@ -84,6 +88,13 @@ function DataCatalog({ setPage }) {
       {tab === 'columns' && (
         <ColumnsFlatList tables={all} game={game} search={search} onJumpTo={jumpToColumnInTable} />
       )}
+
+      <ColumnProfileDrawer
+        open={!!profileTarget}
+        col={profileTarget?.col}
+        target={profileTarget?.target}
+        onClose={() => setProfileTarget(null)}
+      />
     </div>
   );
 }

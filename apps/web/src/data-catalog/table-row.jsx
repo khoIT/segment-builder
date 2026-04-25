@@ -25,7 +25,7 @@ function fmtTime(iso) {
   return d.toISOString().slice(0, 10);
 }
 
-export function TableRow({ table, expanded, onToggle, jumpToColumn, onJumpHandled, setPage }) {
+export function TableRow({ table, expanded, onToggle, jumpToColumn, onJumpHandled, setPage, onProfile }) {
   return (
     <Card padding={0}>
       <button
@@ -66,13 +66,14 @@ export function TableRow({ table, expanded, onToggle, jumpToColumn, onJumpHandle
           jumpToColumn={jumpToColumn}
           onJumpHandled={onJumpHandled}
           setPage={setPage}
+          onProfile={onProfile}
         />
       )}
     </Card>
   );
 }
 
-function ExpandPanel({ tableId, jumpToColumn, onJumpHandled, setPage }) {
+function ExpandPanel({ tableId, jumpToColumn, onJumpHandled, setPage, onProfile }) {
   const detailQ = useDataCatalogTable(tableId);
   const detail = detailQ.data;
 
@@ -100,9 +101,9 @@ function ExpandPanel({ tableId, jumpToColumn, onJumpHandled, setPage }) {
               key={c.name}
               col={c}
               tableId={detail.id}
-              sourceRef={detail.sourceRef}
               flash={jumpToColumn === c.name}
               onFlashed={onJumpHandled}
+              onProfile={onProfile}
             />
           ))}
         </div>
