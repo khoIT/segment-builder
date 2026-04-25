@@ -15,10 +15,13 @@ is inline via `src/theme.jsx` tokens (`T.*`) and `colors_and_type.css` globals.
 Icons: Lucide via CDN, rendered inline as React SVGs (never emit `<i data-lucide>`).
 Deploy: Dokploy + Nixpacks via the `start` script in `package.json`.
 
-**Information architecture (3 groups):**
-- **Catalog** — `Sources`, `MappingStudio`, `DataCatalog`, `MetricsCatalog`, `FreshnessSLAs`, `RawExplorer`
-- **Intelligence** — `FeatureBuilder`, `PropensityModels`
-- **Activation** — `SegmentBuilder`, `LiveMonitor`, `Campaigns`, `GameAnalytics`
+**Information architecture (4 groups, mirrors the data-pipeline layering):**
+- **Sources** — `Sources`, `RawExplorer`, `MappingStudio`, `DataCatalog` *(raw event plumbing + the catalog browser of all artefacts)*
+- **Metrics** — `MetricBuilder`, `MetricsCatalog`, `FreshnessSLAs` *(author / browse / operate metrics calculated from raw events)*
+- **Intelligence** — `FeatureBuilder`, `PropensityModels` *(features + models built on top of metrics)*
+- **Activation** — `SegmentBuilder`, `LiveMonitor`, `Campaigns`, `GameAnalytics` *(consume metrics + segments)*
+
+Catalog tables carry a `layer: 'raw_event' | 'aggregate' | 'master'` tag. Metric Builder source picker filters to `raw_event` only — aggregates are already metrics, master tables are mapping outputs.
 
 **Top-level files you must know:**
 - `src/App.jsx` — app shell (NAV, ROLES, renderPage, 3 nav variants, BrandMark)
@@ -146,7 +149,7 @@ feature, page, or component **must** be built on the existing tokens and primiti
 7. **Three games only** (PTG, CFM, TFB). Don't invent new studios/titles in data.
 8. **New pages go through `App.jsx`:** add to `NAV`, update the `ROLES` page
    sets that should see it, add a `case` in `renderPage`. Stay inside the
-   Catalog · Intelligence · Activation IA — don't add a fourth group casually.
+   Sources · Metrics · Intelligence · Activation IA — don't add a fifth group casually.
 9. **Variations (sidebar / wizard / stepper):** optional layout alternates live
    in `App.jsx` (SegmentBuilderSidebar / SegmentBuilderWizard) or `variations.html`.
    Build on these patterns instead of reinventing.

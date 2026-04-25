@@ -32,6 +32,17 @@ function physicalTableName(spec: CatalogTableSpec): string {
   return `catalog_${spec.id}`;
 }
 
+// Map a spec to (baseDerivationId, gameId, gameCode). For CFM the spec
+// id is the bare derivation ('revenue'); for other games the id is
+// '<game>_<derivation>' (e.g. 'blstr_revenue').
+function parseDerivedId(spec: CatalogTableSpec): { baseId: string; gameId: string; gameCode: string } {
+  if (spec.game === 'BLSTR' && spec.id.startsWith('blstr_')) {
+    return { baseId: spec.id.slice('blstr_'.length), gameId: 'blstr', gameCode: 'BLSTR' };
+  }
+  // Default route: bare id = CFM derivation.
+  return { baseId: spec.id, gameId: 'cfm', gameCode: 'CFM' };
+}
+
 async function ensurePhysicalTable(pool: Pool, spec: CatalogTableSpec) {
   const tbl = physicalTableName(spec);
   const colsSql = spec.columns.map((c) => {
@@ -69,6 +80,7 @@ async function upsertMetadata(db: NodePgDatabase<typeof schema>, spec: CatalogTa
     name: spec.name,
     game: spec.game,
     category: spec.category,
+    layer: spec.layer,
     partitionKeys: spec.partitionKeys as never,
     rowCount: spec.rowCount,
     lastRefreshAt: new Date(),
@@ -78,6 +90,8 @@ async function upsertMetadata(db: NodePgDatabase<typeof schema>, spec: CatalogTa
   }).onConflictDoUpdate({
     target: schema.catalogTables.id,
     set: {
+      // Re-classify on every seed so layer drift in specs.ts is picked up.
+      layer: spec.layer,
       rowCount: spec.rowCount,
       lastRefreshAt: new Date(),
       sourceKind: spec.sourceKind,
@@ -120,9 +134,19 @@ export async function seedDataCatalog(db: NodePgDatabase<typeof schema>, pool: P
 
     let rows = 0;
     let mode: 'local' | 'synthetic' = 'synthetic';
-    if (LOCAL_DERIVATIONS.has(spec.id as DerivationName)) {
+
+    // Per-game derive routing: spec.id may be a bare CFM-default
+    // ('revenue') or game-prefixed ('blstr_revenue'). Strip the prefix
+    // to look up the derivation function; pass game context to drive
+    // WHERE filters + game label literals in the SQL.
+    const { baseId, gameId, gameCode } = parseDerivedId(spec);
+    if (baseId && LOCAL_DERIVATIONS.has(baseId as DerivationName)) {
       try {
-        rows = await deriveFromLocal(pool, spec.id as DerivationName);
+        rows = await deriveFromLocal(pool, baseId as DerivationName, {
+          gameId,
+          gameCode,
+          target: physicalTableName(spec),
+        });
         mode = 'local';
       } catch (e) {
         // eslint-disable-next-line no-console

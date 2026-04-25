@@ -230,9 +230,11 @@ export const rawEtlRecharge = pgTable('raw_etl_recharge', {
   platid: text('platid'),
   productid: text('productid'),
   ds: date('ds').notNull(),
+  gameId: text('game_id').notNull().default('cfm'),
 }, (t) => ({
   byUser: index('raw_recharge_user').on(t.vopenid),
   byDs: index('raw_recharge_ds').on(t.ds),
+  byGame: index('raw_recharge_game').on(t.gameId),
 }));
 
 export const rawEtlLogin = pgTable('raw_etl_login', {
@@ -243,9 +245,11 @@ export const rawEtlLogin = pgTable('raw_etl_login', {
   clientversion: text('clientversion'),
   deviceid: text('deviceid'),
   ds: date('ds').notNull(),
+  gameId: text('game_id').notNull().default('cfm'),
 }, (t) => ({
   byUser: index('raw_login_user').on(t.vopenid),
   byDs: index('raw_login_ds').on(t.ds),
+  byGame: index('raw_login_game').on(t.gameId),
 }));
 
 export const rawEtlLogout = pgTable('raw_etl_logout', {
@@ -253,8 +257,10 @@ export const rawEtlLogout = pgTable('raw_etl_logout', {
   dteventtime: timestamp('dteventtime', { withTimezone: true }).notNull(),
   onlinetime: integer('onlinetime'),
   ds: date('ds').notNull(),
+  gameId: text('game_id').notNull().default('cfm'),
 }, (t) => ({
   byUser: index('raw_logout_user').on(t.vopenid),
+  byGame: index('raw_logout_game').on(t.gameId),
 }));
 
 export const rawEtlGameDetail = pgTable('raw_etl_game_detail', {
@@ -265,8 +271,10 @@ export const rawEtlGameDetail = pgTable('raw_etl_game_detail', {
   score: integer('score'),
   gameduration: integer('gameduration'),
   ds: date('ds').notNull(),
+  gameId: text('game_id').notNull().default('cfm'),
 }, (t) => ({
   byUser: index('raw_game_user').on(t.playeropenid),
+  byGame: index('raw_game_game').on(t.gameId),
 }));
 
 export const rawStdMasterUserProfile = pgTable('raw_std_master_user_profile', {
@@ -284,7 +292,10 @@ export const rawStdMasterUserProfile = pgTable('raw_std_master_user_profile', {
   is_retained_d30: boolean('is_retained_d30').notNull().default(false),
   churn_prob: doublePrecision('churn_prob').notNull().default(0),
   days_since_active: integer('days_since_active').notNull().default(0),
-});
+  gameId: text('game_id').notNull().default('cfm'),
+}, (t) => ({
+  byGame: index('raw_profile_game').on(t.gameId),
+}));
 
 // ─── Data Catalog metadata (phase 01) ───────────────────────────────
 // catalog_tables / catalog_columns / column_profiles back the new
@@ -296,6 +307,10 @@ export const catalogTables = pgTable('catalog_tables', {
   name: text('name').notNull(),                         // human label, often == id
   game: text('game'),                                   // PTG|CFM|TFB|null (cross-game cube)
   category: text('category').notNull(),                 // 'ua_ads'|'monetization'|'engagement'|...
+  // Pipeline tier: raw_event (atomic, metric-source candidate),
+  // aggregate (pre-rolled cube / per-user state), master (built via mapping).
+  // Drives Metric Builder source filter + Data Catalog layer chip.
+  layer: text('layer').notNull().default('aggregate'),
   partitionKeys: jsonb('partition_keys').notNull(),     // string[]
   rowCount: bigint('row_count', { mode: 'number' }).notNull().default(0),
   lastRefreshAt: timestamp('last_refresh_at', { withTimezone: true }),
@@ -307,6 +322,7 @@ export const catalogTables = pgTable('catalog_tables', {
 }, (t) => ({
   byCategory: index('catalog_by_category').on(t.category),
   byGame: index('catalog_by_game').on(t.game),
+  byLayer: index('catalog_by_layer').on(t.layer),
 }));
 
 export const catalogColumns = pgTable('catalog_columns', {
@@ -367,3 +383,26 @@ export const masterUserProfileDx = pgTable('master_user_profile_dx', {
 
 // The other 5 templates' physical tables get added in phase 04b when
 // they're actually wired to the build pipeline. KISS — add as needed.
+
+// ─── Metric pipelines (M1: P04) ─────────────────────────────────────
+// Plumbing companion to `metrics`: holds the MetricSpec + schedule +
+// last-run signals. 1:1 with metrics.id. The compiler in query-svc
+// renders spec → SQL; the pg-boss scheduler in catalog-api fires the
+// materializer and writes rows into per-pipeline `metric_<id>_values`
+// tables created lazily on first run.
+export const metricPipelines = pgTable('metric_pipelines', {
+  id: text('id').primaryKey().references(() => metrics.id, { onDelete: 'cascade' }),
+  spec: jsonb('spec').notNull(),                              // MetricSpec (zod-validated at edge)
+  schedule: text('schedule').notNull(),                       // cron expr lifted from spec.schedule.expr for indexing
+  status: text('status').notNull().default('pending'),        // pending|running|active|failed|paused
+  lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+  nextRunAt: timestamp('next_run_at', { withTimezone: true }),
+  lastRowCount: integer('last_row_count'),
+  lastError: text('last_error'),
+  consecutiveFailures: integer('consecutive_failures').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byStatus: index('mp_by_status').on(t.status),
+  byNextRun: index('mp_by_next_run').on(t.nextRunAt),
+}));

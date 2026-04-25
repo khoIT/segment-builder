@@ -5,9 +5,10 @@
 // real iceberg schemas.
 
 export const GAMES = [
-  { id: 'ptg', code: 'PTG', name: 'Play Together',    short: 'PTG', color: '#f05a22', players: '2.4M DAU', genre: 'Social sandbox', trinoSchema: 'ptg_vn' },
-  { id: 'cfm', code: 'CFM', name: 'CrossFire Mobile', short: 'CFM', color: '#dc2626', players: '1.8M DAU', genre: 'FPS',             trinoSchema: 'cfm_vn' },
-  { id: 'tfb', code: 'TFB', name: 'Total Football',   short: 'TFB', color: '#059669', players: '920K DAU', genre: 'Sports',          trinoSchema: 'tfb_vn' },
+  { id: 'ptg',   code: 'PTG',   name: 'Play Together',    short: 'PTG',   color: '#f05a22', players: '2.4M DAU', genre: 'Social sandbox',  trinoSchema: 'ptg_vn' },
+  { id: 'cfm',   code: 'CFM',   name: 'CrossFire Mobile', short: 'CFM',   color: '#dc2626', players: '1.8M DAU', genre: 'FPS',              trinoSchema: 'cfm_vn' },
+  { id: 'blstr', code: 'BLSTR', name: 'Ballistar',        short: 'BLSTR', color: '#7c3aed', players: '480K DAU', genre: 'PvP shooter',      trinoSchema: 'ballistar' },
+  { id: 'tfb',   code: 'TFB',   name: 'Total Football',   short: 'TFB',   color: '#059669', players: '920K DAU', genre: 'Sports',           trinoSchema: 'tfb_vn' },
 ];
 
 // Top-group lookup mirrors metrics-mock-series.jsx::METRIC_TOP_GROUPS.

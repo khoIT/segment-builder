@@ -14,11 +14,19 @@ export type CatalogColumnSpec = {
   description?: string;
 };
 
+// `layer` is the conceptual data-pipeline tier:
+//   raw_event — atomic, one row per event (sources for metric calc)
+//   aggregate — pre-rolled cube / per-user state (already a metric)
+//   master    — wide master_table built from raw_event via mappings
+// Metric Builder source picker filters to layer === 'raw_event'.
+export type CatalogLayer = 'raw_event' | 'aggregate' | 'master';
+
 export type CatalogTableSpec = {
   id: string;
   name: string;
-  game: 'PTG' | 'CFM' | 'TFB' | null;
+  game: 'PTG' | 'CFM' | 'BLSTR' | 'TFB' | null;
   category: 'ua_ads' | 'monetization' | 'engagement';
+  layer: CatalogLayer;
   partitionKeys: string[];
   rowCount: number;
   sourceKind: 'trino-derived' | 'synthetic';
@@ -38,6 +46,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'ad_impression_events',
     game: null,
     category: 'ua_ads',
+    layer: 'raw_event',
     partitionKeys: ['ds', 'country'],
     rowCount: 485_700,
     sourceKind: 'synthetic',
@@ -56,6 +65,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'installs',
     game: null,
     category: 'ua_ads',
+    layer: 'raw_event',
     partitionKeys: ['install_date', 'country'],
     rowCount: 60_000,
     sourceKind: 'synthetic',
@@ -74,6 +84,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'spend_by_channel',
     game: null,
     category: 'ua_ads',
+    layer: 'aggregate',
     partitionKeys: ['date', 'channel'],
     rowCount: 7_000,
     sourceKind: 'synthetic',
@@ -92,6 +103,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'revenue',
     game: 'CFM',
     category: 'monetization',
+    layer: 'raw_event',
     partitionKeys: ['ds', 'country'],
     rowCount: 100_000,
     sourceKind: 'trino-derived',
@@ -110,6 +122,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'monthly_revenue_summary',
     game: 'CFM',
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['year', 'month'],
     rowCount: 720,
     sourceKind: 'trino-derived',
@@ -127,6 +140,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'arpdau_trend',
     game: 'CFM',
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['date', 'country'],
     rowCount: 1_830,
     sourceKind: 'trino-derived',
@@ -144,6 +158,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'ltv_by_cohort',
     game: 'CFM',
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date', 'country'],
     rowCount: 4_500,
     sourceKind: 'trino-derived',
@@ -162,6 +177,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'roas_by_cohort',
     game: 'CFM',
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date', 'source'],
     rowCount: 4_500,
     sourceKind: 'trino-derived',
@@ -180,6 +196,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'payback_analysis',
     game: 'CFM',
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date'],
     rowCount: 4_500,
     sourceKind: 'trino-derived',
@@ -197,6 +214,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'ltv_model_accuracy',
     game: null,
     category: 'monetization',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date', 'model_version'],
     rowCount: 60,
     sourceKind: 'synthetic',
@@ -215,6 +233,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'sessions',
     game: 'CFM',
     category: 'engagement',
+    layer: 'raw_event',
     partitionKeys: ['ds'],
     rowCount: 80_000,
     sourceKind: 'trino-derived',
@@ -233,6 +252,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'dau_trend',
     game: 'CFM',
     category: 'engagement',
+    layer: 'aggregate',
     partitionKeys: ['date'],
     rowCount: 5_400,
     sourceKind: 'trino-derived',
@@ -251,6 +271,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'retention_curve',
     game: 'CFM',
     category: 'engagement',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date'],
     rowCount: 1_200,
     sourceKind: 'trino-derived',
@@ -267,6 +288,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'engagement_analysis',
     game: 'CFM',
     category: 'engagement',
+    layer: 'aggregate',
     partitionKeys: ['cohort_date', 'tier'],
     rowCount: 50_000,
     sourceKind: 'trino-derived',
@@ -287,6 +309,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'conversion_funnel',
     game: null,
     category: 'engagement',
+    layer: 'aggregate',
     partitionKeys: ['install_date'],
     rowCount: 50_000,
     sourceKind: 'synthetic',
@@ -306,6 +329,7 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
     name: 'churn_signals',
     game: 'CFM',
     category: 'engagement',
+    layer: 'aggregate',
     partitionKeys: ['as_of_date'],
     rowCount: 30_000,
     sourceKind: 'trino-derived',
@@ -323,6 +347,41 @@ export const CATALOG_SPECS: CatalogTableSpec[] = [
   },
 ];
 
-// Sanity: 16 tables, 195 columns, ~885K rows.
+// ── Ballistar variants ──────────────────────────────────────────────
+// 8 derived tables cloned from CFM (revenue/sessions/dau_trend/...) and
+// re-pointed at iceberg.ballistar. Smaller user pool (~15K) → smaller
+// row counts, retuned per game-spec defaults. id prefix `blstr_` keeps
+// the per-game physical tables (catalog_blstr_*) collision-free.
+
+const BLSTR_DERIVED_IDS = new Set([
+  'revenue', 'sessions', 'dau_trend', 'retention_curve',
+  'engagement_analysis', 'churn_signals', 'monthly_revenue_summary',
+  'arpdau_trend',
+]);
+
+const BLSTR_ROW_SCALE = 0.5;  // ~half the row counts of CFM (15K vs 30K users)
+
+function cfmToBlstr(spec: CatalogTableSpec): CatalogTableSpec {
+  const newId = `blstr_${spec.id}`;
+  return {
+    ...spec,
+    id: newId,
+    name: `blstr_${spec.name}`,
+    game: 'BLSTR',
+    rowCount: Math.round(spec.rowCount * BLSTR_ROW_SCALE),
+    sourceRef: spec.sourceRef
+      ? spec.sourceRef.replace('iceberg.cfm_vn.', 'iceberg.ballistar.')
+      : null,
+    description: spec.description.replace(/cfm_vn/g, 'ballistar'),
+  };
+}
+
+const BLSTR_SPECS: CatalogTableSpec[] = CATALOG_SPECS
+  .filter((s) => s.game === 'CFM' && BLSTR_DERIVED_IDS.has(s.id))
+  .map(cfmToBlstr);
+
+CATALOG_SPECS.push(...BLSTR_SPECS);
+
+// Sanity: 16 + 8 = 24 tables, ~270 columns, ~975K rows.
 export const TOTAL_COLUMNS = CATALOG_SPECS.reduce((a, t) => a + t.columns.length, 0);
 export const TOTAL_ROWS = CATALOG_SPECS.reduce((a, t) => a + t.rowCount, 0);

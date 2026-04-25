@@ -22,6 +22,27 @@
       "when": 1777106191443,
       "tag": "0002_raw_events",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777110083461,
+      "tag": "0003_metric_pipelines",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777116411173,
+      "tag": "0004_raw_events_game_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1777117646362,
+      "tag": "0005_catalog_layer",
+      "breakpoints": true
     }
   ]
 }

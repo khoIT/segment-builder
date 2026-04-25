@@ -28,11 +28,19 @@ export const CatalogLineageCounts = z.object({
 });
 export type CatalogLineageCounts = z.infer<typeof CatalogLineageCounts>;
 
+// Pipeline tier:
+//   raw_event — atomic event row (valid metric source)
+//   aggregate — pre-rolled cube / per-user state (already a metric)
+//   master    — wide master_table built from raw_event via mappings
+export const CatalogLayer = z.enum(['raw_event', 'aggregate', 'master']);
+export type CatalogLayer = z.infer<typeof CatalogLayer>;
+
 export const CatalogTable = z.object({
   id: z.string(),
   name: z.string(),
   game: z.string().nullable(),                        // 'PTG'|'CFM'|'TFB'|null
   category: z.string(),
+  layer: CatalogLayer,
   partitionKeys: z.array(z.string()),
   rowCount: z.number().int().nonnegative(),
   columnCount: z.number().int().nonnegative(),

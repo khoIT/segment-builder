@@ -10,7 +10,6 @@ import { createHash } from 'node:crypto';
 // the seed past the 60s budget. Local simulation runs in ~30s and
 // sidesteps schema-mismatch surprises (cfm_vn evolves under our feet).
 
-const SEED = 0xC0FFEE;
 const COHORT_START = Date.UTC(2024, 3, 1);
 const COHORT_END   = Date.UTC(2026, 3, 25);
 const NOW          = Date.UTC(2026, 3, 25);
@@ -21,6 +20,24 @@ const SOURCES   = ['organic', 'facebook', 'google', 'tiktok', 'unity', 'applovin
 const PRODUCTS  = ['gem_pack_s', 'gem_pack_m', 'gem_pack_l', 'battle_pass', 'starter_kit', 'cosmetic_a'];
 const DEVICES   = ['iPhone15', 'iPhone14', 'PixelPro', 'GalaxyS23', 'iPad', 'OnePlus11'];
 const VERSIONS  = ['4.20.1', '4.21.0', '4.22.0', '4.22.1', '4.23.0'];
+
+// Per-game simulation tunings. Add an entry to grow/shrink a game.
+// gameId values mirror games.id (lowercase code) so the catalog filters
+// line up across both surfaces.
+export type GameSimSpec = {
+  gameId: string;
+  seed: number;
+  userKeyPrefix: string;
+  userCount: number;
+  payerRate: number;
+  txnsPerPayerAvg: number;
+  sessionsPerUserAvg: number;
+};
+
+export const DEFAULT_SIMULATIONS: GameSimSpec[] = [
+  { gameId: 'cfm',   seed: 0xC0FFEE, userKeyPrefix: 'u_', userCount: 30_000, payerRate: 0.18, txnsPerPayerAvg: 5, sessionsPerUserAvg: 12 },
+  { gameId: 'blstr', seed: 0xBA1115, userKeyPrefix: 'b_', userCount: 15_000, payerRate: 0.22, txnsPerPayerAvg: 6, sessionsPerUserAvg: 9  },
+];
 
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
@@ -37,15 +54,11 @@ const pick = <T>(rng: () => number, arr: readonly T[]) => arr[Math.floor(rng() *
 const dayBetween = (rng: () => number, a: number, b: number) => new Date(a + rng() * (b - a));
 const dayOnlyStr = (d: Date) => d.toISOString().slice(0, 10);
 
-function hashUserId(seed: number, i: number): string {
+function hashUserId(seed: number, prefix: string, i: number): string {
   const h = createHash('sha1').update(`${seed}-${i}`).digest();
-  return 'u_' + h.subarray(0, 8).toString('hex');
+  return prefix + h.subarray(0, 8).toString('hex');
 }
 
-const USERS_TARGET = 30_000;
-const PAYER_RATE = 0.18;          // ~18% pay
-const TXNS_PER_PAYER_AVG = 5;     // ~5 transactions per payer
-const SESSIONS_PER_USER_AVG = 12; // 12 sessions per user lifetime
 const BATCH_SIZE = 5000;
 
 type UserSpec = {
@@ -70,14 +83,29 @@ type UserSpec = {
   total_rev: number;
 };
 
-async function bulkInsert(pool: Pool, table: string, cols: string[], rows: unknown[][]) {
+// Postgres caps prepared-statement parameters at 65535. We pick an
+// effective batch that stays comfortably under the cap given the
+// table's column count. Headroom = 0.9 of the cap to absorb future
+// column additions without revisiting this constant.
+const PG_PARAM_CAP = 65535;
+const PG_PARAM_HEADROOM = 0.9;
+
+// `onConflict` lets callers append e.g. "ON CONFLICT (vopenid) DO NOTHING"
+// for tables where the synthetic key (8-hex SHA1 prefix) has a non-trivial
+// birthday-collision probability across the per-game user pool.
+async function bulkInsert(pool: Pool, table: string, cols: string[], rows: unknown[][], onConflict = '') {
   if (!rows.length) return;
   const colSql = cols.map((c) => `"${c}"`).join(', ');
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+  const maxByCols = Math.floor((PG_PARAM_CAP * PG_PARAM_HEADROOM) / cols.length);
+  const effectiveBatch = Math.min(BATCH_SIZE, maxByCols);
+  for (let i = 0; i < rows.length; i += effectiveBatch) {
+    const batch = rows.slice(i, i + effectiveBatch);
     const params: unknown[] = [];
     const tuples: string[] = [];
     for (const row of batch) {
+      if (row.length !== cols.length) {
+        throw new Error(`bulkInsert ${table}: row has ${row.length} cells but ${cols.length} cols expected · row=${JSON.stringify(row).slice(0, 200)}`);
+      }
       const ph: string[] = [];
       for (const v of row) {
         params.push(v);
@@ -85,31 +113,57 @@ async function bulkInsert(pool: Pool, table: string, cols: string[], rows: unkno
       }
       tuples.push(`(${ph.join(', ')})`);
     }
-    await pool.query(`INSERT INTO "${table}" (${colSql}) VALUES ${tuples.join(', ')}`, params);
+    await pool.query(`INSERT INTO "${table}" (${colSql}) VALUES ${tuples.join(', ')} ${onConflict}`, params);
   }
 }
 
-export async function simulateRawEvents(pool: Pool): Promise<void> {
+// Run all configured games (default: cfm + blstr). One TRUNCATE up
+// front; per-game inserts append. Each game gets its own RNG (seeded
+// per-game) so adding/removing a game doesn't reshuffle the others.
+export async function simulateRawEvents(
+  pool: Pool,
+  sims: GameSimSpec[] = DEFAULT_SIMULATIONS,
+): Promise<void> {
   // eslint-disable-next-line no-console
-  console.log('[seed:raw] simulating raw event tables…');
+  console.log(`[seed:raw] simulating raw event tables for ${sims.length} game(s)…`);
   const t0 = Date.now();
-  const rng = mulberry32(SEED);
 
   // Truncate first — re-runnable.
   for (const t of ['raw_etl_recharge', 'raw_etl_login', 'raw_etl_logout', 'raw_etl_game_detail', 'raw_std_master_user_profile']) {
     await pool.query(`TRUNCATE "${t}"`);
   }
 
-  // ── 1. Generate 30K user specs ──────────────────────────────────────
+  for (const sim of sims) {
+    await simulateOneGame(pool, sim);
+  }
+
+  // Refresh planner stats. Without this Postgres still sees the
+  // pre-seed (empty) stats for the new `game_id` column, which makes
+  // the LATERAL JOIN in catalog.sessions estimate ~0 rows and fall
+  // into a degenerate plan that scans the entire raw_etl_logout. ANALYZE
+  // here adds <1s and turns the sessions derive from "hangs" → "1.5s".
+  for (const t of ['raw_etl_recharge', 'raw_etl_login', 'raw_etl_logout', 'raw_etl_game_detail', 'raw_std_master_user_profile']) {
+    await pool.query(`ANALYZE "${t}"`);
+  }
+
+  // eslint-disable-next-line no-console
+  console.log(`[seed:raw] all games done · ${Date.now() - t0}ms`);
+}
+
+async function simulateOneGame(pool: Pool, sim: GameSimSpec): Promise<void> {
+  const t0 = Date.now();
+  const rng = mulberry32(sim.seed);
+
+  // ── 1. Generate user specs for this game ──────────────────────────
   const users: UserSpec[] = [];
-  for (let i = 0; i < USERS_TARGET; i++) {
+  for (let i = 0; i < sim.userCount; i++) {
     const install_time = dayBetween(rng, COHORT_START, COHORT_END - 30 * 86400_000);
     const lifespan_d = Math.floor(1 + rng() * 540); // 1..540 days
     const last_login_time = new Date(Math.min(install_time.getTime() + lifespan_d * 86400_000, NOW));
-    const is_payer = rng() < PAYER_RATE;
+    const is_payer = rng() < sim.payerRate;
     const days_active = Math.round((last_login_time.getTime() - install_time.getTime()) / 86400_000);
     users.push({
-      vopenid: hashUserId(SEED, i),
+      vopenid: hashUserId(sim.seed, sim.userKeyPrefix, i),
       install_time,
       country: pick(rng, COUNTRIES),
       platid: pick(rng, PLATFORMS),
@@ -117,8 +171,8 @@ export async function simulateRawEvents(pool: Pool): Promise<void> {
       version: pick(rng, VERSIONS),
       source: pick(rng, SOURCES),
       is_payer,
-      expected_txns: is_payer ? Math.floor(1 + rng() * TXNS_PER_PAYER_AVG * 2) : 0,
-      expected_sessions: Math.floor(1 + rng() * SESSIONS_PER_USER_AVG * 2),
+      expected_txns: is_payer ? Math.floor(1 + rng() * sim.txnsPerPayerAvg * 2) : 0,
+      expected_sessions: Math.floor(1 + rng() * sim.sessionsPerUserAvg * 2),
       last_login_time,
       is_retained_d1:  days_active >= 1,
       is_retained_d7:  days_active >= 7,
@@ -129,7 +183,7 @@ export async function simulateRawEvents(pool: Pool): Promise<void> {
     });
   }
 
-  // ── 2. Generate recharge events first (they decide total_rev) ───────
+  // ── 2. Recharges ──────────────────────────────────────────────────
   const rechargeRows: unknown[][] = [];
   for (const u of users) {
     for (let i = 0; i < u.expected_txns; i++) {
@@ -139,15 +193,15 @@ export async function simulateRawEvents(pool: Pool): Promise<void> {
       rechargeRows.push([
         u.vopenid, txn_time.toISOString(), usd,
         pick(rng, ['USD', 'VND', 'THB', 'PHP']), u.platid, pick(rng, PRODUCTS),
-        dayOnlyStr(txn_time),
+        dayOnlyStr(txn_time), sim.gameId,
       ]);
     }
   }
   await bulkInsert(pool, 'raw_etl_recharge',
-    ['vopenid', 'dteventtime', 'imoney_us', 'currency', 'platid', 'productid', 'ds'],
+    ['vopenid', 'dteventtime', 'imoney_us', 'currency', 'platid', 'productid', 'ds', 'game_id'],
     rechargeRows);
 
-  // ── 3. Login + logout pairs (one logout per login) ─────────────────
+  // ── 3. Login + logout + game-detail ───────────────────────────────
   const loginRows: unknown[][] = [];
   const logoutRows: unknown[][] = [];
   const gameRows: unknown[][] = [];
@@ -158,49 +212,50 @@ export async function simulateRawEvents(pool: Pool): Promise<void> {
       const logout_time = new Date(login_time.getTime() + dur_min * 60_000);
       loginRows.push([
         u.vopenid, login_time.toISOString(), u.country, u.platid,
-        u.version, u.device, dayOnlyStr(login_time),
+        u.version, u.device, dayOnlyStr(login_time), sim.gameId,
       ]);
       logoutRows.push([
-        u.vopenid, logout_time.toISOString(), dur_min * 60, dayOnlyStr(logout_time),
+        u.vopenid, logout_time.toISOString(), dur_min * 60, dayOnlyStr(logout_time), sim.gameId,
       ]);
-      // 80% of sessions produce a game-detail row.
       if (rng() < 0.8) {
         gameRows.push([
           u.vopenid, login_time.toISOString(),
           rng() < 0.5 ? 'win' : 'lose',
-          Math.floor(rng() * 25),       // killflag
-          Math.floor(rng() * 100),      // score
-          Math.floor(60 + rng() * 1500),// gameduration
-          dayOnlyStr(login_time),
+          Math.floor(rng() * 25), Math.floor(rng() * 100),
+          Math.floor(60 + rng() * 1500), dayOnlyStr(login_time), sim.gameId,
         ]);
       }
     }
   }
   await bulkInsert(pool, 'raw_etl_login',
-    ['vopenid', 'dteventtime', 'country', 'platid', 'clientversion', 'deviceid', 'ds'],
+    ['vopenid', 'dteventtime', 'country', 'platid', 'clientversion', 'deviceid', 'ds', 'game_id'],
     loginRows);
   await bulkInsert(pool, 'raw_etl_logout',
-    ['vopenid', 'dteventtime', 'onlinetime', 'ds'],
+    ['vopenid', 'dteventtime', 'onlinetime', 'ds', 'game_id'],
     logoutRows);
   await bulkInsert(pool, 'raw_etl_game_detail',
-    ['playeropenid', 'dteventtime', 'gameresult', 'killflag', 'score', 'gameduration', 'ds'],
+    ['playeropenid', 'dteventtime', 'gameresult', 'killflag', 'score', 'gameduration', 'ds', 'game_id'],
     gameRows);
 
-  // ── 4. User profiles ───────────────────────────────────────────────
+  // ── 4. User profiles ──────────────────────────────────────────────
   const profileRows: unknown[][] = users.map((u) => [
     u.vopenid, u.install_time.toISOString(), u.last_login_time.toISOString(),
     u.expected_txns > 0 ? u.last_login_time.toISOString() : null,
     u.country, u.platid, u.source, u.total_rev,
     u.is_retained_d1, u.is_retained_d7, u.is_retained_d30,
-    u.churn_prob, u.days_since_active,
+    u.churn_prob, u.days_since_active, sim.gameId,
   ]);
+  // PK is vopenid only; with 8-hex SHA1 prefix the per-game pool can
+  // self-collide (~2.7% for 15K users). Drop the rare dup; full ROW
+  // count is informational, not load-bearing.
   await bulkInsert(pool, 'raw_std_master_user_profile',
     ['vopenid', 'install_time', 'last_login_time', 'last_charge_time',
      'first_country_code', 'first_os', 'media_source', 'total_rev',
      'is_retained_d1', 'is_retained_d7', 'is_retained_d30',
-     'churn_prob', 'days_since_active'],
-    profileRows);
+     'churn_prob', 'days_since_active', 'game_id'],
+    profileRows,
+    'ON CONFLICT (vopenid) DO NOTHING');
 
   // eslint-disable-next-line no-console
-  console.log(`[seed:raw]  users=${users.length.toLocaleString()} recharges=${rechargeRows.length.toLocaleString()} logins=${loginRows.length.toLocaleString()} games=${gameRows.length.toLocaleString()} · ${Date.now() - t0}ms`);
+  console.log(`[seed:raw]  ${sim.gameId.padEnd(6)} users=${users.length.toLocaleString().padStart(7)} recharges=${rechargeRows.length.toLocaleString().padStart(7)} logins=${loginRows.length.toLocaleString().padStart(7)} games=${gameRows.length.toLocaleString().padStart(7)} · ${Date.now() - t0}ms`);
 }

@@ -26,10 +26,12 @@ function DataCatalog({ setPage }) {
   const listQ = useDataCatalog();
   const all = listQ.data?.items ?? [];
 
-  // Game filter (client-side; cross-game cubes only show under 'all').
+  // Game filter (client-side). When a specific game is picked we still
+  // include cross-game cubes (game === null) — they're catalog rollups
+  // relevant to every title (UA spend, install funnel, model accuracy).
   const gameFiltered = game === 'all'
     ? all
-    : all.filter((t) => (t.game ?? '').toLowerCase() === game.toLowerCase());
+    : all.filter((t) => t.game == null || (t.game ?? '').toLowerCase() === game.toLowerCase());
 
   // Search filter for Tables tab — matches name / category / partition keys.
   const q = search.trim().toLowerCase();
@@ -80,7 +82,15 @@ function DataCatalog({ setPage }) {
           ))}
           {tablesFiltered.length === 0 && (
             <div style={{ padding: 32, textAlign: 'center', color: T.n500 }}>
-              {listQ.isLoading ? 'Loading…' : 'No tables match the current filters.'}
+              {listQ.isLoading
+                ? 'Loading…'
+                : listQ.isError
+                  // Distinguish auth/network failures from a truly empty
+                  // catalog so users don't chase a phantom seed problem.
+                  ? `Couldn't load catalog: ${listQ.error?.message ?? 'unknown error'}${listQ.error?.status === 401 ? ' — sign-in expired, refresh the page.' : ''}`
+                  : all.length === 0
+                    ? 'Catalog is empty — run `pnpm db:seed` to populate.'
+                    : `No tables match game=${game}${q ? ` · search="${search}"` : ''}.`}
             </div>
           )}
         </div>

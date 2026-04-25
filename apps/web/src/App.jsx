@@ -6,6 +6,7 @@ import { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaign
 import { Sources } from './Sources.jsx';
 import { MappingStudio } from './MappingStudio.jsx';
 import { DataCatalog } from './data-catalog/index.jsx';
+import { MetricBuilder } from './metric-builder/index.jsx';
 import { MetricsCatalog } from './MetricsCatalog.jsx';
 import { FreshnessSLAs } from './FreshnessSLAs.jsx';
 
@@ -20,15 +21,22 @@ const TWEAKS = /*EDITMODE-BEGIN*/{
   "accentColor": "#f05a22"
 }/*EDITMODE-END*/;
 
-// New IA: Catalog · Intelligence · Activation.
+// IA mirrors the data-pipeline layering: Sources → Metrics → Intelligence → Activation.
+//   Sources       — raw event plumbing + the catalog browser of all artefacts
+//   Metrics       — author / browse / operate calculated metrics
+//   Intelligence  — features + propensity models built on metrics
+//   Activation    — segment, monitor, campaigns, analytics
 const NAV = [
-  { group: 'Catalog',      items: [
+  { group: 'Sources',      items: [
     { id: 'sources',    label: 'Sources',            icon: 'database' },
+    { id: 'explorer',   label: 'Raw data explorer',  icon: 'file-search' },
     { id: 'mapping',    label: 'Mapping Studio',     icon: 'git-branch', primary: true },
     { id: 'datacatalog', label: 'Data Catalog',      icon: 'library' },
+  ]},
+  { group: 'Metrics',      items: [
+    { id: 'metric-builder', label: 'Metric Builder', icon: 'sigma' },
     { id: 'metrics',    label: 'Metrics Catalog',    icon: 'layers' },
     { id: 'freshness',  label: 'Freshness & SLAs',   icon: 'timer' },
-    { id: 'explorer',   label: 'Raw data explorer',  icon: 'file-search' },
   ]},
   { group: 'Intelligence', items: [
     { id: 'features',   label: 'Feature builder',    icon: 'function-square' },
@@ -44,9 +52,9 @@ const NAV = [
 
 const ROLES = [
   { id: 'liveops',  label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
-    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'datacatalog']) },
+    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'metric-builder', 'datacatalog']) },
   { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'mapping',
-    pages: new Set(['sources', 'mapping', 'datacatalog', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
+    pages: new Set(['sources', 'mapping', 'datacatalog', 'metric-builder', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
   { id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
     pages: new Set(['monitor', 'campaigns', 'analytics', 'metrics']) },
   { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'mapping',
@@ -590,6 +598,7 @@ export default function App() {
       case 'sources':    return <Sources />;
       case 'mapping':    return <MappingStudio setPage={setPage} />;
       case 'datacatalog': return <DataCatalog setPage={setPage} />;
+      case 'metric-builder': return <MetricBuilder setPage={setPage} />;
       case 'metrics':    return <MetricsCatalog setPage={setPage} />;
       case 'freshness':  return <FreshnessSLAs />;
       case 'explorer':   return <RawExplorer />;
