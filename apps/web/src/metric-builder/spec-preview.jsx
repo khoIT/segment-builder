@@ -2,14 +2,19 @@ import React from 'react';
 import { T, Icon } from '../theme.jsx';
 import { useSqlPreview } from '../api/hooks.js';
 
-// Right rail: live MetricSpec JSON + rendered SQL. SQL hits a debounced
-// preview-sql endpoint that round-trips the spec through the compiler
-// (no execution). When fields are missing the API returns 400; we
-// surface that as a "Compiler not yet ready" state.
+// Right rail: sources summary + live MetricSpec JSON + rendered SQL.
+// SQL hits a debounced preview-sql endpoint that round-trips the spec
+// through the compiler (no execution). The compiler now handles multi-source
+// specs natively (P3). Missing required fields → "not yet ready" state.
 
 export function SpecPreview({ spec }) {
-  const ready = !!spec.cohort.sourceTable && !!spec.aggregation.fn
-    && !!spec.window.eventDateColumn && !!spec.cohort.keyColumn;
+  const primarySource = spec.sources?.[0];
+  const ready = !!primarySource?.table
+    && !!primarySource?.keyColumn
+    && !!spec.aggregation.fn
+    && !!spec.window.eventDateColumn;
+
+  // Only send a spec to the preview endpoint when it's minimally valid.
   const sqlQ = useSqlPreview(ready ? spec : null);
 
   return (
@@ -29,6 +34,14 @@ export function SpecPreview({ spec }) {
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+        {/* Sources summary — shown as soon as at least one source is picked */}
+        {spec.sources?.length > 0 && (
+          <Section label="Sources">
+            <SourcesSummary sources={spec.sources} joins={spec.joins} />
+          </Section>
+        )}
+
         <Section label="MetricSpec">
           <pre style={{
             margin: 0, padding: '10px 12px',
@@ -89,6 +102,48 @@ export function SpecPreview({ spec }) {
           )}
         </Section>
       </div>
+    </div>
+  );
+}
+
+// Compact one-line summary: "p:raw_etl_recharge · s:raw_etl_match (joined on vopenid=vopenid)"
+function SourcesSummary({ sources, joins }) {
+  const parts = sources.map((s) => (
+    <span key={s.alias} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 16, height: 16, borderRadius: 8,
+        background: T.brand, color: '#fff',
+        fontFamily: T.fMono, fontSize: 9, fontWeight: 700,
+      }}>{s.alias}</span>
+      <span style={{ fontFamily: T.fMono, fontSize: 10, color: T.n800 }}>{s.table}</span>
+    </span>
+  ));
+
+  // Build join hints: "joined on vopenid=vopenid"
+  const joinHints = (joins ?? []).map((j, i) => {
+    const pair = j.on?.[0];
+    if (!pair) return null;
+    return (
+      <span key={i} style={{ fontSize: 10, color: T.n500, fontFamily: T.fMono }}>
+        {' '}(joined on {pair.leftCol}={pair.rightCol})
+      </span>
+    );
+  }).filter(Boolean);
+
+  return (
+    <div style={{
+      padding: '8px 10px', borderRadius: 6,
+      background: T.n50, border: `1px solid ${T.n100}`,
+      display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
+      fontSize: 11, fontFamily: T.fSans,
+    }}>
+      {parts.reduce((acc, el, i) => {
+        if (i > 0) acc.push(<span key={`dot-${i}`} style={{ color: T.n300 }}> · </span>);
+        acc.push(el);
+        return acc;
+      }, [])}
+      {joinHints}
     </div>
   );
 }

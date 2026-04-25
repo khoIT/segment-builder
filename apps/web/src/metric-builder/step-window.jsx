@@ -4,7 +4,7 @@ import { T, Icon } from '../theme.jsx';
 // Step 3: pick window kind, days, event_date_column, cohort key.
 // rolling_days = last N days from now(); cohort_relative joins by
 // install_time later (compiler in P06). Event-date column scoped to
-// timestamp/date columns; key column free-text within identifiers.
+// timestamp/date columns; key column = primary source's keyColumn field.
 
 const TIME_TYPES = new Set(['date', 'timestamp']);
 
@@ -15,7 +15,7 @@ export function StepWindow({ spec, tableDetail, onSetWindow, onSetKey }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 880 }}>
-      <SectionHead label="3 · Window & cohort key" hint="How far back, on which timestamp, keyed by what." />
+      <SectionHead label="3 · Window & key" hint="How far back, on which timestamp, keyed by what." />
 
       {/* Window kind */}
       <div style={{ display: 'flex', gap: 8 }}>
@@ -121,7 +121,7 @@ export function StepWindow({ spec, tableDetail, onSetWindow, onSetKey }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {keyCols.length === 0 && <span style={{ fontSize: 12, color: T.n500 }}>No eligible key columns on this table.</span>}
           {keyCols.map((c) => {
-            const picked = spec.cohort.keyColumn === c.name;
+            const picked = (spec.sources?.[0]?.keyColumn ?? '') === c.name;
             return (
               <button
                 key={c.name}
