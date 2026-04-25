@@ -127,3 +127,6 @@ worktrees/
 # demo runtime
 .demo-drip.pid
 .demo-drip.log
+
+# stray dev logs
+api*.log
