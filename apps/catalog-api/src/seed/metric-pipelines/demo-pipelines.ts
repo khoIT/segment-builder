@@ -8,15 +8,8 @@ import type { MetricSpec } from '@bedrock/contracts';
 // Demo metric pipelines — give the metric-builder + metrics catalog
 // something concrete to render after a fresh `pnpm db:seed`. Idempotent.
 //
-// Each row defines:
-//   - a `metrics` registry row (created if missing)
-//   - a `metric_pipelines` row holding a MetricSpec + cron schedule
-//   - a materialized `metric_<id>_values` table with (date, key, value)
-//
-// We materialize inline using INSERT...SELECT against the seeded
-// `raw_etl_*` tables (same compiler shape as the runtime materializer).
-// Keeping it inline (not via the HTTP materializer) keeps the seed
-// fully offline — no need for catalog-api or query-svc to be running.
+// Specs use the new multi-source shape: sources[] + joins[].
+// Single-source metrics have sources.length === 1 and joins === [].
 // ─────────────────────────────────────────────────────────────────────
 
 type Demo = {
@@ -38,9 +31,10 @@ const DEMOS: Demo[] = [
     topGroup: 'revenue',
     unit: 'USD',
     goodDir: 'up',
-    description: '30-day rolling USD spend per user, summed from raw_etl_recharge.',
+    description: '30-day rolling USD spend per user, summed from raw_cfm_etl_recharge.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_recharge', keyColumn: 'vopenid' },
+      sources: [{ table: 'raw_cfm_etl_recharge', alias: 'p', keyColumn: 'vopenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 30, eventDateColumn: 'dteventtime' },
       aggregation: { fn: 'sum', column: 'imoney_us' },
       filters: [],
@@ -57,7 +51,8 @@ const DEMOS: Demo[] = [
     goodDir: 'up',
     description: '30-day order count per user.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_recharge', keyColumn: 'vopenid' },
+      sources: [{ table: 'raw_cfm_etl_recharge', alias: 'p', keyColumn: 'vopenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 30, eventDateColumn: 'dteventtime' },
       aggregation: { fn: 'count', column: null },
       filters: [],
@@ -74,7 +69,8 @@ const DEMOS: Demo[] = [
     goodDir: 'up',
     description: '7-day rolling login count per user.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_login', keyColumn: 'vopenid' },
+      sources: [{ table: 'raw_cfm_etl_login', alias: 'p', keyColumn: 'vopenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 7, eventDateColumn: 'dteventtime' },
       aggregation: { fn: 'count', column: null },
       filters: [],
@@ -91,7 +87,8 @@ const DEMOS: Demo[] = [
     goodDir: 'up',
     description: 'Distinct devices a user logged in from over 30 days.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_login', keyColumn: 'vopenid' },
+      sources: [{ table: 'raw_cfm_etl_login', alias: 'p', keyColumn: 'vopenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 30, eventDateColumn: 'dteventtime' },
       aggregation: { fn: 'count_distinct', column: 'deviceid' },
       filters: [],
@@ -106,11 +103,12 @@ const DEMOS: Demo[] = [
     topGroup: 'engagement',
     unit: 'count',
     goodDir: 'up',
-    description: 'Total kill flag sum across 30 days from raw_etl_game_detail.',
+    description: 'Total kill flag sum across 30 days from raw_cfm_etl_game_detail.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_game_detail', keyColumn: 'playeropenid' },
+      sources: [{ table: 'raw_cfm_etl_game_detail', alias: 'p', keyColumn: 'playeropenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 30, eventDateColumn: 'dteventtime' },
-      aggregation: { fn: 'sum', column: 'killflag' },
+      aggregation: { fn: 'sum', column: 'killflag', cast: 'numeric' },
       filters: [],
       schedule: { kind: 'cron', expr: '@daily' },
       output: { unit: 'count', goodDir: 'up' },
@@ -125,7 +123,8 @@ const DEMOS: Demo[] = [
     goodDir: 'up',
     description: 'Average online minutes per session, rolling 30 days.',
     spec: {
-      cohort: { sourceTable: 'raw_etl_logout', keyColumn: 'vopenid' },
+      sources: [{ table: 'raw_cfm_etl_logout', alias: 'p', keyColumn: 'vopenid' }],
+      joins: [],
       window: { kind: 'rolling_days', days: 30, eventDateColumn: 'dteventtime' },
       aggregation: { fn: 'avg', column: 'onlinetime', cast: 'numeric' },
       filters: [],
@@ -155,8 +154,11 @@ function compileAgg(agg: MetricSpec['aggregation']): string {
 }
 
 function buildMaterializeSql(spec: MetricSpec, valueTable: string): string {
-  const t = quoteIdent(spec.cohort.sourceTable);
-  const k = quoteIdent(spec.cohort.keyColumn);
+  // Primary source is always sources[0]. Single-source only for seed;
+  // multi-source metrics are created via API after seed runs.
+  const primary = spec.sources[0]!;
+  const t = quoteIdent(primary.table);
+  const k = quoteIdent(primary.keyColumn);
   const d = quoteIdent(spec.window.eventDateColumn);
   const agg = compileAgg(spec.aggregation);
   return `INSERT INTO ${quoteIdent(valueTable)} (date, key, value)
@@ -177,6 +179,7 @@ export async function seedDemoMetricPipelines(
 
   for (const d of DEMOS) {
     const valueTable = `metric_${d.id}_values`;
+    const primary = d.spec.sources[0]!;
 
     // 1. Insert metrics row (skip if exists).
     const existingMetric = await db.select().from(schema.metrics).where(eq(schema.metrics.id, d.id)).limit(1);
@@ -197,7 +200,7 @@ export async function seedDemoMetricPipelines(
         description: d.description,
         games: ['ALL'] as never,
         windowSpec: `${d.spec.window.days}d rolling`,
-        source: d.spec.cohort.sourceTable,
+        source: primary.table,
         masterTable: null,
         deps: null,
         model: null,
@@ -226,8 +229,7 @@ export async function seedDemoMetricPipelines(
       });
     }
 
-    // 3. Materialize values inline. Skip if value table already has rows
-    // (idempotent re-runs preserve work). Otherwise create + insert.
+    // 3. Materialize values inline. Skip if value table already has rows.
     await pool.query(`CREATE TABLE IF NOT EXISTS ${quoteIdent(valueTable)} (
       date  date NOT NULL,
       key   text NOT NULL,

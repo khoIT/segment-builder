@@ -5,7 +5,7 @@ import type { Db } from '../db/client';
 import { InjectDb } from '../db/client';
 import { AuditService } from '../audit/audit.service';
 import type { BedrockClaims } from '../auth/auth.service';
-import { MetricSpec } from '@bedrock/contracts';
+import { normalizeMetricSpec } from '@bedrock/contracts';
 
 type ListFilters = {
   topGroup?: string;
@@ -104,7 +104,10 @@ export class MetricsService {
     // row so the scheduler (P07) picks it up. Validation through zod —
     // a malformed spec is a 400 at the service edge, not a silent skip.
     if (input.spec !== undefined && input.spec !== null) {
-      const spec = MetricSpec.parse(input.spec);
+      // normalizeMetricSpec accepts both legacy {cohort} and new {sources,joins}
+      // shapes and validates through MetricSpec zod schema. DB always stores
+      // new shape — normalizer is the single lift point.
+      const spec = normalizeMetricSpec(input.spec);
       const schedule = (input.schedule as string | undefined) ?? spec.schedule.expr;
       await this.db.insert(metricPipelines).values({
         id,

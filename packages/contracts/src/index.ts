@@ -12,7 +12,9 @@ export * from './mapping.js';
 export * from './master-table.js';
 export * from './catalog.js';
 export * from './metric-spec.js';
+export * from './metric-spec-normalizer.js';
 export * from './freshness.js';
+export * from './pipeline.js';
 export * from './segment.js';
 export * from './feature.js';
 export * from './model.js';
@@ -21,6 +23,7 @@ export * from './user.js';
 export * from './audit.js';
 export * from './auth.js';
 export * from './errors.js';
+export * from './connector.js';
 
 // Mapping DSL + 6 starter templates ----------------------------------
 export * from './mapping/index.js';
