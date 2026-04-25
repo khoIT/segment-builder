@@ -4,11 +4,14 @@ import { T, Icon, Input, Tabs, Card } from '../theme.jsx';
 // Search input + Tables/Columns tabs + game chip strip. State lifted
 // to the page (`index.jsx`) so the same query controls both tabs.
 
+// Chips reflect games actually present in the seed data. PTG / TFB are
+// placeholder studios in the games table but have zero catalog rows —
+// adding chips for them would surface "0 results" branches that look
+// like bugs. Add them back here once their seed data lands.
 const GAME_CHIPS = [
-  { value: 'all', label: 'All games' },
-  { value: 'PTG', label: 'PTG' },
-  { value: 'CFM', label: 'CFM' },
-  { value: 'TFB', label: 'TFB' },
+  { value: 'all',   label: 'All games' },
+  { value: 'CFM',   label: 'CFM' },
+  { value: 'BLSTR', label: 'Ballistar' },
 ];
 
 export function CatalogSearch({ search, setSearch, tab, setTab, game, setGame, tablesCount, columnsCount }) {
