@@ -15,104 +15,130 @@ const BR_SOURCES = [
 ];
 
 // ─── Raw log samples per topic (for the "toggle raw/standard" view) ────
+// Mapping Studio source samples — mirror the REAL Trino raw schemas we
+// have in `infra/trino-mock/data/{cfm_vn,ballistar}/`. CFM rows mirror
+// `iceberg.cfm_vn.etl_*`; BLSTR rows mirror `iceberg.ballistar.etl_*`.
+// Both map to the same standard schema (see BR_STANDARD_LOGS) so the UI
+// demonstrates the cross-game normalisation Bedrock provides.
 const BR_RAW_LOGS = {
-  'login_logout_ptg': {
-    columns: ['ts','uid','evt','dvc','cc','sess_id','app_ver','os'],
+  'login_logout_cfm': {
+    columns: ['vopenid', 'dteventtime', 'country', 'platid', 'clientversion', 'deviceid', 'ds'],
     rows: [
-      ['1745305812','823119234','login',  'and', 'VN','s_8kx2z','4.12.0','android-14'],
-      ['1745305901','823119234','logout', 'and', 'VN','s_8kx2z','4.12.0','android-14'],
-      ['1745305823','823119811','login',  'ios', 'TH','s_9p1la','4.12.0','ios-17.3'],
-      ['1745305844','823120042','login',  'and', 'PH','s_3bq7w','4.11.9','android-13'],
-      ['1745305866','823118778','login',  'ios', 'VN','s_1kk90','4.12.0','ios-17.4'],
-      ['1745305891','823119912','login',  'and', 'ID','s_2lm8p','4.12.0','android-14'],
+      ['u_823119234', '2026-04-22 10:30:12+00', 'VN', 'android', '4.12.0', 'd_4f1a', '2026-04-22'],
+      ['u_823119234', '2026-04-22 10:31:41+00', 'VN', 'android', '4.12.0', 'd_4f1a', '2026-04-22'],
+      ['u_823119811', '2026-04-22 10:30:23+00', 'TH', 'ios',     '4.12.0', 'd_9b2e', '2026-04-22'],
+      ['u_823120042', '2026-04-22 10:30:44+00', 'PH', 'android', '4.11.9', 'd_3c08', '2026-04-22'],
+      ['u_823118778', '2026-04-22 10:31:06+00', 'VN', 'ios',     '4.12.0', 'd_1d77', '2026-04-22'],
     ],
   },
-  'moneyflow_ptg': {
-    columns: ['ts','uid','typ','amt','cur','txn','bal_after','item_ref'],
+  'login_logout_blstr': {
+    columns: ['account_id', 'role_id', 'login_time', 'country_code', 'login_channel', 'os_platform', 'os_version', 'device_id', 'ds'],
     rows: [
-      ['1745305812','823119234','earn',   '120',  'diamond','t_auto',   '4820','quest_reward'],
-      ['1745305822','823119234','spend',  '-800', 'diamond','t_purchase','4020','avatar_item_881'],
-      ['1745305841','823119811','earn',   '50',   'coin',   't_auto',   '12082','daily_bonus'],
-      ['1745305852','823120042','spend',  '-200', 'diamond','t_purchase','180',  'gift_box_01'],
-      ['1745305861','823118778','earn',   '300',  'coin',   't_auto',   '9384','match_win'],
+      ['3236000389934678016', '23514901', '2025-05-29 17:00:02+00', 'TH', '5', 'Android', 'Android OS 13', '6bc542af', '2025-05-30'],
+      ['3228122585430384640', '11099669', '2025-05-29 17:00:03+00', 'TH', '4', 'Android', 'Android OS 13', 'e9019425', '2025-05-30'],
+      ['3198440217044299776', '32084412', '2025-05-29 17:00:11+00', 'ID', '5', 'iOS',     'iOS 17.4',      'a7c91120', '2025-05-30'],
+      ['3236000389934678017', '23514902', '2025-05-29 17:00:24+00', 'VN', '4', 'Android', 'Android OS 14', '6bc54300', '2025-05-30'],
     ],
   },
-  'recharge_ptg': {
-    columns: ['ts','uid','pkg_id','price_vnd','gw','order_id','status','promo'],
+  'recharge_cfm': {
+    columns: ['vopenid', 'dteventtime', 'imoney_us', 'currency', 'platid', 'productid', 'ds'],
     rows: [
-      ['1745305812','823119234','pkg_lg','199000','momo',  'o_8812','settled','SPRING10'],
-      ['1745305911','823119811','pkg_md','99000', 'vnpay', 'o_8813','settled',''],
-      ['1745306001','823118778','pkg_xl','499000','momo',  'o_8814','pending',''],
-      ['1745306122','823120042','pkg_sm','49000', 'viettel','o_8815','settled','SPRING10'],
+      ['u_823119234', '2026-04-22 10:32:41+00',  9.99, 'USD', 'ios',     'gem_pack_l',  '2026-04-22'],
+      ['u_823119811', '2026-04-22 10:34:01+00',  4.99, 'USD', 'android', 'battle_pass', '2026-04-22'],
+      ['u_823120042', '2026-04-22 10:36:22+00', 19.99, 'USD', 'ios',     'starter_kit', '2026-04-22'],
+      ['u_823118778', '2026-04-22 10:38:55+00',  1.99, 'USD', 'android', 'gem_pack_s',  '2026-04-22'],
+    ],
+  },
+  'recharge_blstr': {
+    columns: ['account_id', 'recharge_time', 'charged_value', 'money_type', 'os_platform', 'product_id', 'payment_channel', 'is_first_recharge', 'ds'],
+    rows: [
+      ['3236000389934678016', '2025-05-29 18:11:02+00',  4.99, 'USD', 'Android', 'pkg_starter',     'google_play', 1, '2025-05-30'],
+      ['3228122585430384640', '2025-05-29 18:42:21+00',  9.99, 'USD', 'Android', 'pkg_battle_pass', 'google_play', 0, '2025-05-30'],
+      ['3198440217044299776', '2025-05-29 19:01:55+00', 19.99, 'USD', 'iOS',     'pkg_gem_l',       'app_store',   0, '2025-05-30'],
     ],
   },
 };
 
-// Standard (mapped) output for those same rows
+// Standard (mapped) output for the rows above. Same target schema for
+// every game — that's the whole point of mapping.
 const BR_STANDARD_LOGS = {
-  'login_logout_ptg': {
-    columns: ['event_time','user_id','event_type','platform','country','session_id','app_version','os_version','game'],
+  'login_logout_cfm': {
+    columns: ['event_time', 'user_id', 'event_type', 'platform', 'country', 'session_id', 'app_version', 'game'],
     rows: [
-      ['2026-04-22 10:30:12','u_823119234','session_start','android','VN','s_8kx2z','4.12.0','android-14','PTG'],
-      ['2026-04-22 10:31:41','u_823119234','session_end',  'android','VN','s_8kx2z','4.12.0','android-14','PTG'],
-      ['2026-04-22 10:30:23','u_823119811','session_start','ios',    'TH','s_9p1la','4.12.0','ios-17.3','PTG'],
-      ['2026-04-22 10:30:44','u_823120042','session_start','android','PH','s_3bq7w','4.11.9','android-13','PTG'],
-      ['2026-04-22 10:31:06','u_823118778','session_start','ios',    'VN','s_1kk90','4.12.0','ios-17.4','PTG'],
-      ['2026-04-22 10:31:31','u_823119912','session_start','android','ID','s_2lm8p','4.12.0','android-14','PTG'],
+      ['2026-04-22 10:30:12', 'u_823119234', 'session_start', 'android', 'VN', 'sess_4f1a_001', '4.12.0', 'CFM'],
+      ['2026-04-22 10:31:41', 'u_823119234', 'session_end',   'android', 'VN', 'sess_4f1a_001', '4.12.0', 'CFM'],
+      ['2026-04-22 10:30:23', 'u_823119811', 'session_start', 'ios',     'TH', 'sess_9b2e_001', '4.12.0', 'CFM'],
+      ['2026-04-22 10:30:44', 'u_823120042', 'session_start', 'android', 'PH', 'sess_3c08_001', '4.11.9', 'CFM'],
+      ['2026-04-22 10:31:06', 'u_823118778', 'session_start', 'ios',     'VN', 'sess_1d77_001', '4.12.0', 'CFM'],
     ],
   },
-  'moneyflow_ptg': {
-    columns: ['event_time','user_id','action_type','amount','currency','transaction_ref','balance_after','item_ref','game'],
+  'login_logout_blstr': {
+    columns: ['event_time', 'user_id', 'event_type', 'platform', 'country', 'session_id', 'app_version', 'game'],
     rows: [
-      ['2026-04-22 10:30:12','u_823119234','currency_earn',  120, 'diamond','t_auto',   4820, 'quest_reward',       'PTG'],
-      ['2026-04-22 10:30:22','u_823119234','currency_spend', -800,'diamond','t_purchase',4020,'avatar_item_881',    'PTG'],
-      ['2026-04-22 10:30:41','u_823119811','currency_earn',  50,  'coin',   't_auto',   12082,'daily_bonus',        'PTG'],
-      ['2026-04-22 10:30:52','u_823120042','currency_spend', -200,'diamond','t_purchase',180, 'gift_box_01',        'PTG'],
-      ['2026-04-22 10:31:01','u_823118778','currency_earn',  300, 'coin',   't_auto',   9384,'match_win',          'PTG'],
+      ['2025-05-29 17:00:02', 'u_3236000389934678016', 'session_start', 'android', 'TH', 'sess_6bc542af_001', 'Android OS 13', 'BLSTR'],
+      ['2025-05-29 17:00:03', 'u_3228122585430384640', 'session_start', 'android', 'TH', 'sess_e9019425_001', 'Android OS 13', 'BLSTR'],
+      ['2025-05-29 17:00:11', 'u_3198440217044299776', 'session_start', 'ios',     'ID', 'sess_a7c91120_001', 'iOS 17.4',      'BLSTR'],
+      ['2025-05-29 17:00:24', 'u_3236000389934678017', 'session_start', 'android', 'VN', 'sess_6bc54300_001', 'Android OS 14', 'BLSTR'],
     ],
   },
-  'recharge_ptg': {
-    columns: ['event_time','user_id','package_id','amount_vnd','payment_gateway','order_id','status','promo_code','game'],
+  'recharge_cfm': {
+    columns: ['event_time', 'user_id', 'amount_usd', 'currency', 'platform', 'product_id', 'game'],
     rows: [
-      ['2026-04-22 10:30:12','u_823119234','pkg_lg',199000,'momo',   'o_8812','settled','SPRING10','PTG'],
-      ['2026-04-22 10:31:51','u_823119811','pkg_md', 99000,'vnpay',  'o_8813','settled','',        'PTG'],
-      ['2026-04-22 10:33:21','u_823118778','pkg_xl',499000,'momo',   'o_8814','pending','',        'PTG'],
-      ['2026-04-22 10:35:22','u_823120042','pkg_sm', 49000,'viettel','o_8815','settled','SPRING10','PTG'],
+      ['2026-04-22 10:32:41', 'u_823119234',  9.99, 'USD', 'ios',     'gem_pack_l',  'CFM'],
+      ['2026-04-22 10:34:01', 'u_823119811',  4.99, 'USD', 'android', 'battle_pass', 'CFM'],
+      ['2026-04-22 10:36:22', 'u_823120042', 19.99, 'USD', 'ios',     'starter_kit', 'CFM'],
+      ['2026-04-22 10:38:55', 'u_823118778',  1.99, 'USD', 'android', 'gem_pack_s',  'CFM'],
+    ],
+  },
+  'recharge_blstr': {
+    columns: ['event_time', 'user_id', 'amount_usd', 'currency', 'platform', 'product_id', 'game'],
+    rows: [
+      ['2025-05-29 18:11:02', 'u_3236000389934678016',  4.99, 'USD', 'android', 'pkg_starter',     'BLSTR'],
+      ['2025-05-29 18:42:21', 'u_3228122585430384640',  9.99, 'USD', 'android', 'pkg_battle_pass', 'BLSTR'],
+      ['2025-05-29 19:01:55', 'u_3198440217044299776', 19.99, 'USD', 'ios',     'pkg_gem_l',       'BLSTR'],
     ],
   },
 };
 
-// Field mapping state for Mapping Studio (raw → standard)
+// Field mapping state for Mapping Studio (raw → standard).
+// CFM uses the cfm_vn naming convention (vopenid, dteventtime, platid…).
+// BLSTR uses the ballistar convention (account_id, login_time, os_platform…).
+// Both normalise into the same target schema — that's the value the
+// Mapping Studio surface is meant to communicate.
 const BR_MAPPINGS = {
-  'login_logout_ptg': [
-    { raw: 'ts',       rawType: 'epoch_sec', std: 'event_time',   stdType: 'timestamp',  transform: 'to_timestamp(ts)',                confidence: 99, required: true },
-    { raw: 'uid',      rawType: 'string',    std: 'user_id',      stdType: 'string',     transform: "concat('u_', uid)",               confidence: 100, required: true },
-    { raw: 'evt',      rawType: 'enum',      std: 'event_type',   stdType: 'enum',       transform: "map('login'→'session_start', 'logout'→'session_end')", confidence: 96, required: true },
-    { raw: 'dvc',      rawType: 'enum',      std: 'platform',     stdType: 'enum',       transform: "map('and'→'android', 'ios'→'ios')", confidence: 100, required: true },
-    { raw: 'cc',       rawType: 'string',    std: 'country',      stdType: 'iso_cc',     transform: 'upper(cc)',                       confidence: 100, required: true },
-    { raw: 'sess_id',  rawType: 'string',    std: 'session_id',   stdType: 'string',     transform: 'sess_id',                         confidence: 100, required: true },
-    { raw: 'app_ver',  rawType: 'string',    std: 'app_version',  stdType: 'semver',     transform: 'app_ver',                         confidence: 92,  required: false },
-    { raw: 'os',       rawType: 'string',    std: 'os_version',   stdType: 'string',     transform: 'os',                              confidence: 88,  required: false },
+  'login_logout_cfm': [
+    { raw: 'vopenid',       rawType: 'string',    std: 'user_id',      stdType: 'string',    transform: "concat('u_', vopenid)",       confidence: 100, required: true },
+    { raw: 'dteventtime',   rawType: 'timestamp', std: 'event_time',   stdType: 'timestamp', transform: 'dteventtime',                  confidence: 100, required: true },
+    { raw: 'country',       rawType: 'iso_cc',    std: 'country',      stdType: 'iso_cc',    transform: 'upper(country)',               confidence: 100, required: true },
+    { raw: 'platid',        rawType: 'enum',      std: 'platform',     stdType: 'enum',      transform: "map('android'→'android','ios'→'ios')", confidence: 100, required: true },
+    { raw: 'deviceid',      rawType: 'string',    std: 'session_id',   stdType: 'string',    transform: "concat('sess_', deviceid, '_', date_part('hour', dteventtime))", confidence: 88, required: true, warning: 'Synthesised from deviceid+hour — true session_id not in raw schema' },
+    { raw: 'clientversion', rawType: 'string',    std: 'app_version',  stdType: 'semver',    transform: 'clientversion',                confidence: 96,  required: false },
+    { raw: '—',             rawType: 'string',    std: 'event_type',   stdType: 'enum',      transform: "literal('session_start')",     confidence: 100, required: true, note: 'Derived from table: etl_login → session_start; etl_logout → session_end' },
   ],
-  'moneyflow_ptg': [
-    { raw: 'ts',        rawType: 'epoch_sec', std: 'event_time',       stdType: 'timestamp', transform: 'to_timestamp(ts)',         confidence: 99,  required: true },
-    { raw: 'uid',       rawType: 'string',    std: 'user_id',          stdType: 'string',    transform: "concat('u_', uid)",        confidence: 100, required: true },
-    { raw: 'typ',       rawType: 'enum',      std: 'action_type',      stdType: 'enum',      transform: "map('earn'→'currency_earn','spend'→'currency_spend')", confidence: 98, required: true },
-    { raw: 'amt',       rawType: 'string',    std: 'amount',           stdType: 'bigint',    transform: 'cast(amt as bigint)',      confidence: 100, required: true },
-    { raw: 'cur',       rawType: 'enum',      std: 'currency',         stdType: 'enum',      transform: 'cur',                      confidence: 100, required: true },
-    { raw: 'txn',       rawType: 'string',    std: 'transaction_ref',  stdType: 'string',    transform: 'txn',                      confidence: 96,  required: false },
-    { raw: 'bal_after', rawType: 'string',    std: 'balance_after',    stdType: 'bigint',    transform: 'cast(bal_after as bigint)',confidence: 100, required: false },
-    { raw: 'item_ref',  rawType: 'string',    std: 'item_ref',         stdType: 'string',    transform: 'item_ref',                 confidence: 72,  required: false, warning: 'Sparse · only 34% populated' },
+  'login_logout_blstr': [
+    { raw: 'account_id',  rawType: 'string',    std: 'user_id',      stdType: 'string',    transform: "concat('u_', account_id)", confidence: 100, required: true },
+    { raw: 'login_time',  rawType: 'timestamp', std: 'event_time',   stdType: 'timestamp', transform: 'login_time',                confidence: 100, required: true },
+    { raw: 'country_code',rawType: 'iso_cc',    std: 'country',      stdType: 'iso_cc',    transform: 'country_code',              confidence: 100, required: true },
+    { raw: 'os_platform', rawType: 'enum',      std: 'platform',     stdType: 'enum',      transform: 'lower(os_platform)',        confidence: 100, required: true },
+    { raw: 'role_id',     rawType: 'string',    std: 'session_id',   stdType: 'string',    transform: "concat('sess_', role_id, '_', date_part('hour', login_time))", confidence: 82, required: true, warning: 'Synthesised — ballistar lacks an explicit session_id; role_id+hour is the closest proxy' },
+    { raw: 'os_version',  rawType: 'string',    std: 'app_version',  stdType: 'semver',    transform: "regexp_extract(os_version, '\\d+(\\.\\d+)*')", confidence: 78, required: false, warning: 'os_version is OS+device combined — extracts a numeric prefix' },
+    { raw: '—',           rawType: 'string',    std: 'event_type',   stdType: 'enum',      transform: "literal('session_start')",  confidence: 100, required: true, note: 'Derived from table: etl_login → session_start; etl_logout → session_end' },
   ],
-  'recharge_ptg': [
-    { raw: 'ts',        rawType: 'epoch_sec', std: 'event_time',     stdType: 'timestamp', transform: 'to_timestamp(ts)',  confidence: 99,  required: true },
-    { raw: 'uid',       rawType: 'string',    std: 'user_id',        stdType: 'string',    transform: "concat('u_', uid)", confidence: 100, required: true },
-    { raw: 'pkg_id',    rawType: 'string',    std: 'package_id',     stdType: 'string',    transform: 'pkg_id',            confidence: 100, required: true },
-    { raw: 'price_vnd', rawType: 'string',    std: 'amount_vnd',     stdType: 'bigint',    transform: 'cast(price_vnd as bigint)', confidence: 100, required: true },
-    { raw: 'gw',        rawType: 'enum',      std: 'payment_gateway',stdType: 'enum',      transform: 'gw',                confidence: 100, required: true },
-    { raw: 'order_id',  rawType: 'string',    std: 'order_id',       stdType: 'string',    transform: 'order_id',          confidence: 100, required: true },
-    { raw: 'status',    rawType: 'enum',      std: 'status',         stdType: 'enum',      transform: 'status',            confidence: 100, required: true },
-    { raw: 'promo',     rawType: 'string',    std: 'promo_code',     stdType: 'string',    transform: 'promo',             confidence: 86,  required: false },
+  'recharge_cfm': [
+    { raw: 'vopenid',     rawType: 'string',    std: 'user_id',      stdType: 'string',    transform: "concat('u_', vopenid)",  confidence: 100, required: true },
+    { raw: 'dteventtime', rawType: 'timestamp', std: 'event_time',   stdType: 'timestamp', transform: 'dteventtime',             confidence: 100, required: true },
+    { raw: 'imoney_us',   rawType: 'double',    std: 'amount_usd',   stdType: 'double',    transform: 'imoney_us',               confidence: 100, required: true },
+    { raw: 'currency',    rawType: 'enum',      std: 'currency',     stdType: 'enum',      transform: 'currency',                confidence: 100, required: true },
+    { raw: 'platid',      rawType: 'enum',      std: 'platform',     stdType: 'enum',      transform: 'platid',                  confidence: 100, required: true },
+    { raw: 'productid',   rawType: 'string',    std: 'product_id',   stdType: 'string',    transform: 'productid',               confidence: 100, required: true },
+  ],
+  'recharge_blstr': [
+    { raw: 'account_id',     rawType: 'string',    std: 'user_id',     stdType: 'string',    transform: "concat('u_', account_id)", confidence: 100, required: true },
+    { raw: 'recharge_time',  rawType: 'timestamp', std: 'event_time',  stdType: 'timestamp', transform: 'recharge_time',             confidence: 100, required: true },
+    { raw: 'charged_value',  rawType: 'double',    std: 'amount_usd',  stdType: 'double',    transform: 'charged_value',             confidence: 100, required: true },
+    { raw: 'money_type',     rawType: 'enum',      std: 'currency',    stdType: 'enum',      transform: 'money_type',                confidence: 100, required: true },
+    { raw: 'os_platform',    rawType: 'enum',      std: 'platform',    stdType: 'enum',      transform: 'lower(os_platform)',        confidence: 100, required: true },
+    { raw: 'product_id',     rawType: 'string',    std: 'product_id',  stdType: 'string',    transform: 'product_id',                confidence: 100, required: true },
   ],
 };
 
