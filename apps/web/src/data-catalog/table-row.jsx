@@ -1,6 +1,7 @@
 import React from 'react';
-import { T, Icon, Card, Badge } from '../theme.jsx';
+import { T, Icon, Card, Badge, Button } from '../theme.jsx';
 import { useDataCatalogTable } from '../api/hooks.js';
+import { setHash } from '../routing/hash-state.js';
 import { ColumnPill } from './column-pill.jsx';
 import { SampleRows } from './sample-rows.jsx';
 import { LineageChips } from './lineage-chips.jsx';
@@ -110,8 +111,18 @@ function ExpandPanel({ tableId, jumpToColumn, onJumpHandled, setPage, onProfile 
       </div>
       {/* Sample */}
       <SampleRows sample={detail.sample} />
-      {/* Lineage */}
-      <LineageChips tableId={detail.id} setPage={setPage} />
+      {/* Lineage + Build metric CTA */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <LineageChips tableId={detail.id} setPage={setPage} />
+        </div>
+        <Button
+          variant="primary"
+          onClick={() => { setHash({ table: detail.id }); setPage?.('metric-builder'); }}
+        >
+          <Icon name="sigma" size={13} /> Build metric
+        </Button>
+      </div>
     </div>
   );
 }

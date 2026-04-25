@@ -15,6 +15,7 @@ import { SegmentsModule } from './segments/segments.module';
 import { PinsModule } from './pins/pins.module';
 import { MappingsModule } from './mappings/mappings.module';
 import { MasterTablesModule } from './master-tables/master-tables.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MasterTablesModule } from './master-tables/master-tables.module';
     PinsModule,
     MappingsModule,
     MasterTablesModule,
+    SchedulerModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpErrorFilter },

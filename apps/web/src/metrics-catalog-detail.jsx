@@ -4,6 +4,7 @@ import { T, Icon, Button, Badge, Card, Tabs, Input, Select } from './theme.jsx';
 import { seriesForMetric, last7dAvg, delta7d, formatMetricValue, resampleSeries } from './metrics-mock-series.jsx';
 import { LineageDrawer } from './LineageDrawer.jsx';
 import { StatusChip } from './metrics-signals.jsx';
+import { PipelinePanel } from './metric-builder/pipeline-panel.jsx';
 
 // ═══════════════════════════════════════════════════════════════════════
 // METRIC DETAIL — opens when a row in the Metrics Catalog list is clicked.
@@ -255,6 +256,9 @@ function MetricsCatalogDetail({ metric, onBack, prettyName, formulaToBlurb, onFi
             <Button variant="ghost" size="icon-sm"><Icon name="layout-grid" size={14} /></Button>
             <Button variant="ghost" size="icon-sm" onClick={onBack}><Icon name="x" size={14} /></Button>
           </div>
+
+          {/* Pipeline status (only renders if metric has a metric_pipelines row) */}
+          <PipelinePanel metricId={metric.id} />
 
           {/* Formula */}
           <div style={{ marginBottom: 14 }}>

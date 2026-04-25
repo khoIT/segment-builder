@@ -7,6 +7,7 @@ import { GAMES, SOURCES, METRICS, FRESHNESS, SEGMENTS } from './fixtures';
 import { REAL_CFM_BINDINGS, REAL_BINDING_KEYS } from './real-trino-bindings';
 import { MAPPING_TEMPLATE_BY_ID, MappingSpec } from '@bedrock/contracts';
 import { seedDataCatalog } from './data-catalog/orchestrator';
+import { seedDemoMetricPipelines } from './metric-pipelines/demo-pipelines';
 
 // Idempotent seed via ON CONFLICT DO NOTHING — re-runnable.
 // Run: `pnpm --filter @bedrock/catalog-api db:seed`.
@@ -130,6 +131,10 @@ async function main() {
   }
 
   await seedDataCatalog(db, pool);
+
+  // eslint-disable-next-line no-console
+  console.log('[seed] inserting demo metric pipelines + materialized values');
+  await seedDemoMetricPipelines(db, pool);
 
   // eslint-disable-next-line no-console
   console.log('[seed] done');

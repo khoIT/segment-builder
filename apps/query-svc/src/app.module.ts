@@ -8,6 +8,7 @@ import { CatalogClientModule } from './catalog-client/catalog-client.module';
 import { DriverModule } from './driver/driver.module';
 import { QueryModule } from './query/query.module';
 import { TrinoExplorerModule } from './trino-explorer/trino-explorer.module';
+import { MetricMaterializerModule } from './metric-materializer/metric-materializer.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { HealthModule } from './health/health.module';
     DriverModule,
     QueryModule,
     TrinoExplorerModule,
+    MetricMaterializerModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpErrorFilter }],

@@ -214,3 +214,101 @@ export function usePreviewSegmentCount() {
       q('/q/segments/preview-count', { method: 'POST', body: JSON.stringify(body) }),
   });
 }
+
+// ─── Metric-builder (M1) ────────────────────────────────────────────
+// All four hooks are always-live; metric authoring has no fallback.
+
+// Live SQL preview as the user clicks through the builder. Caller
+// should pass a fully-formed MetricSpec; backend returns rendered SQL
+// and (best-effort) row estimate.
+export function useSqlPreview(spec) {
+  return useQuery({
+    queryKey: ['metricPreviewSql', spec],
+    queryFn: () => api('/metrics/spec/preview-sql', {
+      method: 'POST',
+      body: JSON.stringify({ spec }),
+    }),
+    enabled: !!spec && !!spec.cohort?.sourceTable && !!spec.aggregation?.fn,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateMetricFromSpec() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api('/metrics', { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['metrics'] });
+      qc.invalidateQueries({ queryKey: ['metricPipelines'] });
+    },
+  });
+}
+
+// Trigger an immediate materialization (out-of-band of the cron schedule).
+export function useRunMetricNow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api(`/metrics/${id}/run-now`, { method: 'POST', body: '{}' }),
+    onSuccess: (_d, id) => {
+      qc.invalidateQueries({ queryKey: ['metric', id] });
+      qc.invalidateQueries({ queryKey: ['metricPipeline', id] });
+      qc.invalidateQueries({ queryKey: ['metricRuns', id] });
+    },
+  });
+}
+
+export function usePauseMetric() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, paused }) =>
+      api(`/metrics/${id}/${paused ? 'resume' : 'pause'}`, { method: 'POST', body: '{}' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['metricPipelines'] }),
+  });
+}
+
+export function useMetricPipeline(id) {
+  return useQuery({
+    queryKey: ['metricPipeline', id],
+    queryFn: () => api(`/metrics/${id}/pipeline`),
+    enabled: !!id,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      return s === 'pending' || s === 'running' ? 1500 : false;
+    },
+  });
+}
+
+export function useMetricRuns(id, limit = 20) {
+  return useQuery({
+    queryKey: ['metricRuns', id, limit],
+    queryFn: () => api(`/metrics/${id}/runs?limit=${limit}`),
+    enabled: !!id,
+    refetchInterval: 5000,
+  });
+}
+
+// SegmentBuilder-shaped view over the metrics registry.
+// Returns `{ name, unit, realtime, id, hasPipeline }[]` so the segment
+// canvas can drop the BR_METRICS mock dependency. Lightweight: derives
+// from /metrics + cross-checks /metrics/:id/pipeline lazily.
+export function useSegmentMetricCatalog() {
+  const live = useApi();
+  return useQuery({
+    queryKey: ['segmentMetricCatalog'],
+    queryFn: async () => {
+      const res = await api('/metrics?pageSize=500');
+      return (res.items ?? []).map((m) => ({
+        id: m.id,
+        name: m.name,
+        unit: m.unit,
+        realtime: !!m.realtime,
+        category: m.category,
+        // hasPipeline derived later if needed; default true for newly
+        // authored metrics (which always have a pipeline).
+        hasPipeline: m.type === 'custom',
+      }));
+    },
+    enabled: live,
+    initialData: live ? undefined : [],
+  });
+}

@@ -1,10 +1,11 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, ilike, or, sql, SQL } from 'drizzle-orm';
-import { metrics, metricSourceBindings, metricChangelog, userPins } from '../db/schema';
+import { metrics, metricSourceBindings, metricChangelog, metricPipelines, userPins } from '../db/schema';
 import type { Db } from '../db/client';
 import { InjectDb } from '../db/client';
 import { AuditService } from '../audit/audit.service';
 import type { BedrockClaims } from '../auth/auth.service';
+import { MetricSpec } from '@bedrock/contracts';
 
 type ListFilters = {
   topGroup?: string;
@@ -98,14 +99,42 @@ export class MetricsService {
       updatedAt: now,
     };
     const inserted = await this.db.insert(metrics).values(row).returning();
+
+    // If a MetricSpec ships with the request, register a metric_pipelines
+    // row so the scheduler (P07) picks it up. Validation through zod —
+    // a malformed spec is a 400 at the service edge, not a silent skip.
+    if (input.spec !== undefined && input.spec !== null) {
+      const spec = MetricSpec.parse(input.spec);
+      const schedule = (input.schedule as string | undefined) ?? spec.schedule.expr;
+      await this.db.insert(metricPipelines).values({
+        id,
+        spec: spec as never,
+        schedule,
+        status: 'pending',
+        nextRunAt: new Date(),                    // first run on next tick
+        lastRunAt: null,
+        lastRowCount: null,
+        lastError: null,
+        consecutiveFailures: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
     await this.audit.log({
       actorId: user.sub,
       action: 'create',
       entity: 'metric',
       entityId: id,
-      payload: { name: row.name, owner: row.owner },
+      payload: { name: row.name, owner: row.owner, hasSpec: input.spec != null },
     });
     return inserted[0];
+  }
+
+  async getPipeline(id: string) {
+    const rows = await this.db.select().from(metricPipelines).where(eq(metricPipelines.id, id)).limit(1);
+    if (!rows.length) throw new NotFoundException('metric pipeline not found');
+    return rows[0];
   }
 
   async update(id: string, patch: Record<string, unknown>, ifMatch: number, user: BedrockClaims) {

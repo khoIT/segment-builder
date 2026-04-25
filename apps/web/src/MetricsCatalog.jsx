@@ -401,7 +401,7 @@ function MetricsCatalog({ setPage }) {
             <Button variant="outline" leftIcon="database" onClick={() => setPage && setPage('sources')}>
               Data Catalog
             </Button>
-            <Button variant="neutral" leftIcon="plus" onClick={() => setShowNew(true)}>New Metric</Button>
+            <Button variant="neutral" leftIcon="plus" onClick={() => setPage && setPage('metric-builder')}>New Metric</Button>
           </>}
         />
 
