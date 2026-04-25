@@ -17,6 +17,18 @@ import { InjectDb } from '../db/client';
 // real-time progress polling. The orchestrator runs the build async via
 // a fire-and-forget Promise — caller gets the BuildJob row immediately.
 
+// Trino returns columns as snake_case (matching the SQL aliases) but
+// Drizzle's TS schema uses camelCase keys → without translation every
+// per-template field silently lands as `default` and the row is empty.
+function snakeToCamel(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(row)) {
+    const camel = k.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
+    out[camel] = v;
+  }
+  return out;
+}
+
 @Injectable()
 export class BuildOrchestrator {
   private readonly log = new Logger(BuildOrchestrator.name);
@@ -94,9 +106,20 @@ export class BuildOrchestrator {
       const flush = async () => {
         if (!batch.length) return;
         if (templateId === 'tpl_user_profile_dx') {
-          await this.db.insert(masterUserProfileDx).values(
-            batch.map((r) => ({ ...r, masterTableId })) as never,
-          ).onConflictDoNothing();
+          try {
+            await this.db.insert(masterUserProfileDx).values(
+              batch.map((r) => ({ ...snakeToCamel(r), masterTableId })) as never,
+            ).onConflictDoNothing();
+          } catch (err) {
+            // Surface the pg-side error (Drizzle wraps it but error.cause
+            // carries the original PostgresError with code/detail/column).
+            const cause = (err as { cause?: { message?: string; detail?: string; column?: string; code?: string } }).cause;
+            const causeMsg = cause
+              ? `${cause.code ?? ''} ${cause.message ?? ''} ${cause.detail ?? ''} (col=${cause.column ?? '?'})`
+              : (err as Error).message;
+            const sample = JSON.stringify(snakeToCamel(batch[0])).slice(0, 400);
+            throw new Error(`insert failed at row ${processed + 1}: ${causeMsg}\nfirst row: ${sample}`);
+          }
         }
         // Other templates: phase 06+ adds their physical tables.
         processed += batch.length;

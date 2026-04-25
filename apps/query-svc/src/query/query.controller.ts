@@ -114,13 +114,22 @@ export class QueryController {
     });
   }
 
-  // ── Explorer (mock = 501) ──────────────────────────────────────
+  // ── Explorer ───────────────────────────────────────────────────
+  // TrinoDriver runs the SQL with read-only keyword guard + LIMIT cap;
+  // mock driver returns 501 (no real engine).
   @Post('explorer/run')
-  async explorer() {
-    throw new HttpException({
-      code: 'NOT_IMPLEMENTED',
-      message: 'explorer.run requires QUERY_DRIVER=trino (phase 06)',
-    }, HttpStatus.NOT_IMPLEMENTED);
+  async explorer(@Body() body: { sql: string; limit?: number }) {
+    if (!body?.sql) {
+      throw new HttpException({ code: 'BAD_REQUEST', message: 'sql required' }, HttpStatus.BAD_REQUEST);
+    }
+    const drv = this.driver as QueryDriver & { runExplorer?: (sql: string, limit: number) => Promise<unknown> };
+    if (!drv.runExplorer) {
+      throw new HttpException({
+        code: 'NOT_IMPLEMENTED',
+        message: 'explorer.run requires QUERY_DRIVER=trino',
+      }, HttpStatus.NOT_IMPLEMENTED);
+    }
+    return drv.runExplorer(body.sql, body.limit ?? 1000);
   }
 
   // ── Metric formula dry-run ─────────────────────────────────────

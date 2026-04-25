@@ -119,6 +119,10 @@ export function buildMappingQuery(spec: MappingSpec, opts: BuildOpts): BuiltMapp
   const game = spec.game;
 
   // ── cohort CTE ────────────────────────────────────────────────────
+  // Implicit guard: cohort.keyColumn must be NOT NULL. A row without an
+  // identity column can't participate in any downstream join and would
+  // also violate the per-template wide table's PK on
+  // (master_table_id, key). Keeps specs terse (no manual is_not_null).
   const cohort = spec.cohort;
   const cohortFqn = quoteFqn([catalog, game, cohort.sourceTable]);
   const cohortKey = quoteIdent(cohort.keyColumn);
@@ -126,8 +130,12 @@ export function buildMappingQuery(spec: MappingSpec, opts: BuildOpts): BuiltMapp
   const cohortDate = cohort.cohortDateColumn
     ? `, c.${quoteIdent(cohort.cohortDateColumn)} AS install_time`
     : '';
+  const keyNotNull = `c.${cohortKey} IS NOT NULL`;
+  const cohortWhere = cohortFilters
+    ? `${cohortFilters} AND ${keyNotNull}`
+    : `WHERE ${keyNotNull}`;
 
-  let sql = `WITH cohort AS (\n  SELECT c.${cohortKey} AS ${cohortKey}${cohortDate}\n  FROM ${cohortFqn} c\n  ${cohortFilters}\n  GROUP BY 1${cohortDate ? ', 2' : ''}\n)`;
+  let sql = `WITH cohort AS (\n  SELECT c.${cohortKey} AS ${cohortKey}${cohortDate}\n  FROM ${cohortFqn} c\n  ${cohortWhere}\n  GROUP BY 1${cohortDate ? ', 2' : ''}\n)`;
 
   // ── enrichment CTEs (one per enrichment) ─────────────────────────
   const enrichmentCtes: string[] = [];
@@ -161,12 +169,16 @@ export function buildMappingQuery(spec: MappingSpec, opts: BuildOpts): BuiltMapp
       const winPred = cohort.cohortDateColumn
         ? `${dateCol} >= co.install_time AND ${dateCol} < date_add('day', ${w.days}, co.install_time)`
         : `${dateCol} >= date_add('day', -${w.days}, current_date)`;
-      const userJoinKey = quoteIdent(cohort.keyColumn);
+      const cohortKeyId = quoteIdent(cohort.keyColumn);
+      // Source-side user column may differ (etl_game_detail.playeropenid
+      // vs cohort.vopenid). Alias it to the cohort key in the CTE output
+      // so downstream LEFT JOINs all use the same column name.
+      const sourceUserCol = quoteIdent(ws.userKey ?? cohort.keyColumn);
       const where = userFilters
         ? `${userFilters} AND ${winPred}`
         : `WHERE ${winPred}`;
       windowCtes.push(
-        `${quoteIdent(cteName)} AS (\n  SELECT s.${userJoinKey} AS ${userJoinKey}, ${aggSelects}\n  FROM ${fqn} s\n  JOIN cohort co ON co.${userJoinKey} = s.${userJoinKey}\n  ${where}\n  GROUP BY 1\n)`,
+        `${quoteIdent(cteName)} AS (\n  SELECT s.${sourceUserCol} AS ${cohortKeyId}, ${aggSelects}\n  FROM ${fqn} s\n  JOIN cohort co ON co.${cohortKeyId} = s.${sourceUserCol}\n  ${where}\n  GROUP BY 1\n)`,
       );
     }
   }

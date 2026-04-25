@@ -83,11 +83,16 @@ export const EnrichmentSpec = z.object({
 export type EnrichmentSpec = z.infer<typeof EnrichmentSpec>;
 
 // One source within a window (e.g. all `etl_login` rows in D7).
+// `userKey` overrides cohort.keyColumn when this source's user-id
+// column is named differently (e.g. etl_game_detail.playeropenid vs
+// std_master_user_profile.vopenid). Builder aliases it back to the
+// cohort key in the output CTE.
 export const WindowSourceSpec = z.object({
   sourceTable: z.string().min(1),
   dateColumn: z.string().min(1),             // 'dteventtime' | 'ds' | 'event_date'
   filters: z.array(FilterSpec).default([]),
   aggregations: z.array(AggregationSpec).min(1),
+  userKey: z.string().min(1).optional(),
 });
 export type WindowSourceSpec = z.infer<typeof WindowSourceSpec>;
 

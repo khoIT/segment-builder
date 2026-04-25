@@ -68,10 +68,10 @@ const userProfileDxSpec: MappingSpec = {
         {
           sourceTable: 'etl_game_detail',
           dateColumn: 'dteventtime',
+          userKey: 'playeropenid',           // game_detail uses playeropenid (not vopenid)
           filters: [],
           aggregations: [
             { alias: 'matches_d7', fn: 'count', args: ['*'], cast: 'integer' },
-            { alias: 'kills_d7', fn: 'sum', args: ['kill_count'], cast: 'integer' },
           ],
         },
       ],
@@ -82,11 +82,10 @@ const userProfileDxSpec: MappingSpec = {
       sources: [{
         sourceTable: 'etl_recharge',
         dateColumn: 'dteventtime',
-        filters: [{ column: 'status', op: '=', value: 'settled' }],
+        filters: [],
         aggregations: [
-          { alias: 'rev_usd_d1', fn: 'sum', args: ['amount_usd'], cast: 'double' },
+          { alias: 'rev_usd_d1', fn: 'sum', args: ['imoney_us'], cast: 'double' },
           { alias: 'orders_d1', fn: 'count', args: ['*'], cast: 'integer' },
-          { alias: 'is_payer_d1', fn: 'max', args: ['is_payer'], cast: 'boolean' },
         ],
       }],
     },
@@ -96,13 +95,10 @@ const userProfileDxSpec: MappingSpec = {
       sources: [{
         sourceTable: 'etl_recharge',
         dateColumn: 'dteventtime',
-        filters: [{ column: 'status', op: '=', value: 'settled' }],
+        filters: [],
         aggregations: [
-          { alias: 'rev_usd_d7', fn: 'sum', args: ['amount_usd'], cast: 'double' },
+          { alias: 'rev_usd_d7', fn: 'sum', args: ['imoney_us'], cast: 'double' },
           { alias: 'orders_d7', fn: 'count', args: ['*'], cast: 'integer' },
-          { alias: 'is_payer_d7', fn: 'max', args: ['is_payer'], cast: 'boolean' },
-          { alias: 'bp_orders_d7', fn: 'sum', args: ['is_battlepass'], cast: 'integer' },
-          { alias: 'is_bp_d7', fn: 'max', args: ['is_battlepass'], cast: 'boolean' },
         ],
       }],
     },
@@ -112,11 +108,10 @@ const userProfileDxSpec: MappingSpec = {
       sources: [{
         sourceTable: 'etl_recharge',
         dateColumn: 'dteventtime',
-        filters: [{ column: 'status', op: '=', value: 'settled' }],
+        filters: [],
         aggregations: [
-          { alias: 'rev_usd_d30', fn: 'sum', args: ['amount_usd'], cast: 'double' },
+          { alias: 'rev_usd_d30', fn: 'sum', args: ['imoney_us'], cast: 'double' },
           { alias: 'orders_d30', fn: 'count', args: ['*'], cast: 'integer' },
-          { alias: 'is_payer_d30', fn: 'max', args: ['is_payer'], cast: 'boolean' },
         ],
       }],
     },
@@ -134,12 +129,10 @@ const userProfileDxSpec: MappingSpec = {
     intCol('login_rows_d7', 'window.d7.etl_login'),
     intCol('days_active_d7', 'window.d7.etl_login'),
     intCol('matches_d7', 'window.d7.etl_game_detail'),
-    intCol('kills_d7', 'window.d7.etl_game_detail'),
     // Revenue (D1/D7/D30)
-    doubleCol('rev_usd_d1'), intCol('orders_d1'), boolCol('is_payer_d1'),
-    doubleCol('rev_usd_d7'), intCol('orders_d7'), boolCol('is_payer_d7'),
-    intCol('bp_orders_d7'),  boolCol('is_bp_d7'),
-    doubleCol('rev_usd_d30'),intCol('orders_d30'),boolCol('is_payer_d30'),
+    doubleCol('rev_usd_d1'),  intCol('orders_d1'),
+    doubleCol('rev_usd_d7'),  intCol('orders_d7'),
+    doubleCol('rev_usd_d30'), intCol('orders_d30'),
   ],
   pii: {
     hashColumns: ['vopenid', 'roleid'],

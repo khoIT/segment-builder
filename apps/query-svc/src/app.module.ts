@@ -7,6 +7,7 @@ import { CorrelationMiddleware } from './common/correlation.middleware';
 import { CatalogClientModule } from './catalog-client/catalog-client.module';
 import { DriverModule } from './driver/driver.module';
 import { QueryModule } from './query/query.module';
+import { TrinoExplorerModule } from './trino-explorer/trino-explorer.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { HealthModule } from './health/health.module';
     CatalogClientModule,
     DriverModule,
     QueryModule,
+    TrinoExplorerModule,
     HealthModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: HttpErrorFilter }],

@@ -51,6 +51,14 @@ export async function runTrino(
   const rows: unknown[][] = [];
   let columns: string[] = [];
   for await (const result of iter) {
+    // Trino sends errors as a `.error` field on the response chunk;
+    // without this guard the iterator simply ends and the caller
+    // sees `0 rows, no error` — exactly what we hit on first run.
+    const err = (result as unknown as { error?: { message?: string; errorName?: string } }).error;
+    if (err) {
+      const msg = err.message ?? err.errorName ?? 'Trino query failed';
+      throw new Error(`[trino] ${msg}\nSQL: ${formatted.slice(0, 500)}${formatted.length > 500 ? '…' : ''}`);
+    }
     if (result.columns && !columns.length) {
       columns = result.columns.map((c) => c.name);
     }
@@ -68,6 +76,13 @@ export async function runTrino(
 // substitute ?-placeholders client-side. Strings are escaped via `''`
 // (single-quote doubling); numbers/booleans inlined as literals; null
 // becomes NULL. Any other type throws — we want to know about it.
+//
+// Strings that look like ISO dates/timestamps get a Trino type prefix
+// so comparisons against `timestamp` / `date` columns don't silently
+// return 0 rows. (Trino does not implicitly coerce VARCHAR -> TIMESTAMP.)
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/;
+
 function formatParams(sql: string, params: unknown[]): string {
   let i = 0;
   return sql.replace(/\?/g, () => {
@@ -77,7 +92,12 @@ function formatParams(sql: string, params: unknown[]): string {
     if (typeof v === 'number' || typeof v === 'bigint') return String(v);
     if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
     if (v instanceof Date) return `TIMESTAMP '${v.toISOString()}'`;
-    if (typeof v === 'string') return `'${v.replace(/'/g, "''")}'`;
+    if (typeof v === 'string') {
+      const escaped = `'${v.replace(/'/g, "''")}'`;
+      if (ISO_DATE.test(v)) return `DATE ${escaped}`;
+      if (ISO_TIMESTAMP.test(v)) return `TIMESTAMP ${escaped}`;
+      return escaped;
+    }
     throw new Error(`cannot bind value of type ${typeof v}`);
   });
 }
