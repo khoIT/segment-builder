@@ -15,7 +15,9 @@ import { SegmentsModule } from './segments/segments.module';
 import { PinsModule } from './pins/pins.module';
 import { MappingsModule } from './mappings/mappings.module';
 import { MasterTablesModule } from './master-tables/master-tables.module';
+import { PipelinesModule } from './pipelines/pipelines.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { ConnectorsModule } from './connectors/connectors.module';
 
 @Module({
   imports: [
@@ -39,7 +41,9 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     PinsModule,
     MappingsModule,
     MasterTablesModule,
+    PipelinesModule,
     SchedulerModule,
+    ConnectorsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpErrorFilter },
