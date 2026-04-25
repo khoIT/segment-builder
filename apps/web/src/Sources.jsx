@@ -1,8 +1,8 @@
 import React from 'react';
 import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Tabs, Kpi, SectionHeader, Sparkline } from './theme.jsx';
-import { BR_SOURCES } from './bedrockData.jsx';
+import { useSources } from './api/hooks.js';
 
-/* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Tabs, Kpi, SectionHeader, Sparkline, BR_SOURCES */
+/* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Tabs, Kpi, SectionHeader, Sparkline */
 
 function SourceIcon({ type, size = 32 }) {
   const map = {
@@ -18,7 +18,9 @@ function SourceIcon({ type, size = 32 }) {
 function Sources() {
   const [filter, setFilter] = React.useState('all');
   useLucide(filter);
-  const list = BR_SOURCES.filter(s => filter === 'all' || s.kind === filter);
+  const sourcesQ = useSources();
+  const all = sourcesQ.data?.items ?? [];
+  const list = all.filter(s => filter === 'all' || s.kind === filter);
 
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'auto', background: T.n50 }}>
@@ -31,10 +33,10 @@ function Sources() {
         </>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        <Kpi label="Sources" value={BR_SOURCES.length} sub={`${BR_SOURCES.filter(s=>s.kind==='batch').length} batch · ${BR_SOURCES.filter(s=>s.kind==='realtime').length} realtime`} icon="database" />
-        <Kpi label="Topics" value={BR_SOURCES.reduce((a,s) => a + s.topics.length, 0)} sub="across all sources" icon="layers" />
+        <Kpi label="Sources" value={all.length} sub={`${all.filter(s=>s.kind==='batch').length} batch · ${all.filter(s=>s.kind==='realtime').length} realtime`} icon="database" />
+        <Kpi label="Topics" value={all.reduce((a,s) => a + s.topics.length, 0)} sub="across all sources" icon="layers" />
         <Kpi label="Peak throughput" value="224K/s" delta="+8%" deltaDir="up" sub="Kafka · combined" icon="zap" />
-        <Kpi label="Degraded" value={BR_SOURCES.filter(s=>s.status!=='live').length} sub="needs attention" icon="alert-triangle" />
+        <Kpi label="Degraded" value={all.filter(s=>s.status!=='live').length} sub="needs attention" icon="alert-triangle" />
       </div>
 
       <Card padding={0}>

@@ -133,18 +133,27 @@ export class QueryController {
   }
 
   // ── Mapping executor (consumed by catalog-api BuildOrchestrator) ─
+  // Driver dispatch: TrinoDriver streams from real `iceberg.<schema>.*`;
+  // mock executor synthesises rows from the spec hash.
   @Post('mappings/execute')
   async executeMapping(
     @Body() body: { spec: unknown; masterTableId?: string; batchSize?: number },
     @Res() res: Response,
   ) {
     const spec = MappingSpec.parse(body.spec);
-    const rowCount = body.batchSize && body.batchSize > 0 ? body.batchSize * 10 : 10_000;
     res.setHeader('content-type', 'application/x-ndjson');
     res.setHeader('cache-control', 'no-cache');
     res.flushHeaders();
-    for await (const row of this.executor.execute(spec, rowCount)) {
-      res.write(JSON.stringify(row) + '\n');
+    const driverWithMapping = this.driver as QueryDriver & { executeMapping?: (s: typeof spec, n?: number) => AsyncGenerator<Record<string, unknown>> };
+    if (driverWithMapping.executeMapping) {
+      for await (const row of driverWithMapping.executeMapping(spec)) {
+        res.write(JSON.stringify(row) + '\n');
+      }
+    } else {
+      const rowCount = body.batchSize && body.batchSize > 0 ? body.batchSize * 10 : 10_000;
+      for await (const row of this.executor.execute(spec, rowCount)) {
+        res.write(JSON.stringify(row) + '\n');
+      }
     }
     res.end();
   }

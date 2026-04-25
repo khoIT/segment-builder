@@ -7,7 +7,9 @@ import type {
 import { quoteFqn, quoteIdent } from './sql-builder/identifier';
 import { buildSeriesQuery } from './sql-builder/series.builder';
 import { translateCriteria } from './sql-builder/criteria.translator';
+import { buildMappingQuery } from './sql-builder/mapping.builder';
 import { makeTrino, runTrino } from './trino-client';
+import type { MappingSpec } from '@bedrock/contracts';
 
 // Real Trino driver. Same interface as MockJsonlDriver — driver factory
 // in driver.module.ts swaps based on QUERY_DRIVER env. Mandatory date
@@ -87,6 +89,19 @@ export class TrinoDriver implements QueryDriver {
     const sql = `SELECT * FROM ${fqn} WHERE ${where} LIMIT ${cap}`;
     const r = await runTrino(this.trino(), sql, params, cap);
     return r.rows.map((row) => Object.fromEntries(r.columns.map((c, i) => [c, row[i]])));
+  }
+
+  // MappingSpec → Trino SQL → row stream. Used by query-svc's
+  // /q/mappings/execute endpoint when QUERY_DRIVER=trino. Caller pipes
+  // each yielded record to NDJSON.
+  async *executeMapping(spec: MappingSpec, rowCap = 1_000_000): AsyncGenerator<Record<string, unknown>> {
+    const catalog = this.cfg.get<string>('TRINO_CATALOG') ?? 'iceberg';
+    const { sql, params } = buildMappingQuery(spec, { catalog, rowCap });
+    this.log.log(`[mapping] executing on ${catalog}.${spec.game}, ~${spec.outputColumns.length} cols`);
+    const r = await runTrino(this.trino(), sql, params, rowCap);
+    for (const row of r.rows) {
+      yield Object.fromEntries(r.columns.map((c, i) => [c, row[i]]));
+    }
   }
 
   async runExplorer(sql: string, limit: number) {
