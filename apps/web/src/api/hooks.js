@@ -97,6 +97,43 @@ export function useBuildJobStatus(masterTableId, jobId) {
   });
 }
 
+// ─── Data Catalog (always-live, no fallback) ────────────────────────
+// The Data Catalog page is live-only by design: real Postgres rows
+// (catalog_tables / catalog_columns) seeded by the backend.
+
+export function useDataCatalog(filters = {}) {
+  return useQuery({
+    queryKey: ['dataCatalog', filters],
+    queryFn: () => api(`/catalog${qs(filters)}`),
+  });
+}
+
+export function useDataCatalogTable(id) {
+  return useQuery({
+    queryKey: ['dataCatalogTable', id],
+    queryFn: () => api(`/catalog/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useDataCatalogLineage(id) {
+  return useQuery({
+    queryKey: ['dataCatalogLineage', id],
+    queryFn: () => api(`/catalog/${id}/lineage`),
+    enabled: !!id,
+  });
+}
+
+// Per-column profile (null %, distinct, top values). Hits query-svc.
+export function useColumnProfile(catalog, schema, table, column) {
+  return useQuery({
+    queryKey: ['columnProfile', catalog, schema, table, column],
+    queryFn: () => q(`/q/trino/profile/${catalog}/${schema}/${table}/${column}`),
+    enabled: !!catalog && !!schema && !!table && !!column,
+    staleTime: 5 * 60_000, // 5 min client-side; server cache is 24h
+  });
+}
+
 export function useMappingTemplates() {
   const live = useApi();
   return useQuery({

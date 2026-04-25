@@ -217,6 +217,52 @@ export const freshness = pgTable('freshness_records', {
   byTarget: index('fresh_by_target').on(t.target, t.game),
 }));
 
+// ─── Data Catalog metadata (phase 01) ───────────────────────────────
+// catalog_tables / catalog_columns / column_profiles back the new
+// browse-only Data Catalog page. Per-table physical Postgres tables
+// (`catalog_<id>`) are created at seed time via raw SQL — drizzle-kit
+// only models the metadata, not the 16 ad-hoc data tables.
+export const catalogTables = pgTable('catalog_tables', {
+  id: text('id').primaryKey(),                          // 'ad_impression_events'
+  name: text('name').notNull(),                         // human label, often == id
+  game: text('game'),                                   // PTG|CFM|TFB|null (cross-game cube)
+  category: text('category').notNull(),                 // 'ua_ads'|'monetization'|'engagement'|...
+  partitionKeys: jsonb('partition_keys').notNull(),     // string[]
+  rowCount: bigint('row_count', { mode: 'number' }).notNull().default(0),
+  lastRefreshAt: timestamp('last_refresh_at', { withTimezone: true }),
+  sourceKind: text('source_kind').notNull(),            // 'trino-derived'|'synthetic'|'master-build'
+  sourceRef: text('source_ref'),                        // 'iceberg.cfm_vn.etl_recharge'|null
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  byCategory: index('catalog_by_category').on(t.category),
+  byGame: index('catalog_by_game').on(t.game),
+}));
+
+export const catalogColumns = pgTable('catalog_columns', {
+  tableId: text('table_id').notNull().references(() => catalogTables.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  type: text('type').notNull(),                         // 'string'|'int'|'double'|'date'|'timestamp'|'boolean'|'json'
+  ordinal: integer('ordinal').notNull(),
+  isPii: boolean('is_pii').notNull().default(false),
+  description: text('description'),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.tableId, t.name] }),
+}));
+
+export const columnProfiles = pgTable('column_profiles', {
+  tableId: text('table_id').notNull(),
+  columnName: text('column_name').notNull(),
+  nullPct: doublePrecision('null_pct').notNull().default(0),
+  distinctCount: bigint('distinct_count', { mode: 'number' }).notNull().default(0),
+  topValues: jsonb('top_values').notNull(),             // { value, count, pct }[]
+  sampledRows: bigint('sampled_rows', { mode: 'number' }).notNull().default(0),
+  computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.tableId, t.columnName] }),
+}));
+
 // ─── Per-template master physical tables (phase 04b uses these) ──────
 // Common columns: master_table_id (FK), composite PK (master_table_id, vopenid).
 // Wide columns mirror MappingTemplate.outputColumns. Rebuilt every build.

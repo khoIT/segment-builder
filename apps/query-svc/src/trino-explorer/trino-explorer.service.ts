@@ -5,6 +5,9 @@ import { join, resolve } from 'node:path';
 import { quoteFqn, quoteIdent } from '../driver/sql-builder/identifier';
 import { makeTrino, runTrino } from '../driver/trino-client';
 import type { Trino } from 'trino-client';
+import { ProfileRunner } from './profile-runner';
+import { ProfileCache } from './profile-cache';
+import type { CatalogColumnProfile } from '@bedrock/contracts';
 
 // Browseable view of the iceberg catalog — mirrors what RawExplorer.jsx
 // needs. Two-mode parity:
@@ -25,7 +28,11 @@ export class TrinoExplorerService {
   private trinoClient: Trino | null = null;
   private readonly mockRoot: string;
 
-  constructor(private readonly cfg: ConfigService) {
+  constructor(
+    private readonly cfg: ConfigService,
+    private readonly profileRunner: ProfileRunner,
+    private readonly profileCache: ProfileCache,
+  ) {
     // infra/trino-mock/data/ relative to repo root. CommonJS, so use
     // __dirname; walk up four levels (dist/trino-explorer →
     // apps/query-svc → apps → repo root) to land on infra/.
@@ -155,5 +162,35 @@ export class TrinoExplorerService {
       }
     }
     return { columns: colNames, rows, total: rows.length };
+  }
+
+  // ── column profile (data quality popover) ───────────────────────
+  async profileColumn(
+    catalog: string, schema: string, table: string, column: string,
+  ): Promise<CatalogColumnProfile> {
+    const cached = await this.profileCache.get(catalog, schema, table, column);
+    if (cached) {
+      return {
+        nullPct: cached.nullPct,
+        distinctCount: cached.distinctCount,
+        topValues: cached.topValues,
+        sampledRows: cached.sampledRows,
+        computedAt: cached.computedAt,
+        cached: true,
+      };
+    }
+
+    const fresh = await this.profileRunner.run(catalog, schema, table, column);
+    await this.profileCache.put(catalog, schema, table, column, fresh).catch((e) => {
+      this.log.warn(`profile cache put failed: ${(e as Error).message}`);
+    });
+    return {
+      nullPct: fresh.nullPct,
+      distinctCount: fresh.distinctCount,
+      topValues: fresh.topValues,
+      sampledRows: fresh.sampledRows,
+      computedAt: new Date().toISOString(),
+      cached: false,
+    };
   }
 }

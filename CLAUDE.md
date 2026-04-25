@@ -16,7 +16,7 @@ Icons: Lucide via CDN, rendered inline as React SVGs (never emit `<i data-lucide
 Deploy: Dokploy + Nixpacks via the `start` script in `package.json`.
 
 **Information architecture (3 groups):**
-- **Catalog** — `Sources`, `MappingStudio`, `MasterTables`, `MetricsCatalog`, `FreshnessSLAs`, `RawExplorer`
+- **Catalog** — `Sources`, `MappingStudio`, `DataCatalog`, `MetricsCatalog`, `FreshnessSLAs`, `RawExplorer`
 - **Intelligence** — `FeatureBuilder`, `PropensityModels`
 - **Activation** — `SegmentBuilder`, `LiveMonitor`, `Campaigns`, `GameAnalytics`
 

@@ -5,7 +5,7 @@ import { LiveMonitor } from './LiveMonitor.jsx';
 import { DataConnectors, RawExplorer, FeatureBuilder, PropensityModels, Campaigns, GameAnalytics } from './Screens.jsx';
 import { Sources } from './Sources.jsx';
 import { MappingStudio } from './MappingStudio.jsx';
-import { MasterTables } from './MasterTables.jsx';
+import { DataCatalog } from './data-catalog/index.jsx';
 import { MetricsCatalog } from './MetricsCatalog.jsx';
 import { FreshnessSLAs } from './FreshnessSLAs.jsx';
 
@@ -25,7 +25,7 @@ const NAV = [
   { group: 'Catalog',      items: [
     { id: 'sources',    label: 'Sources',            icon: 'database' },
     { id: 'mapping',    label: 'Mapping Studio',     icon: 'git-branch', primary: true },
-    { id: 'master',     label: 'Master Tables',      icon: 'table-2' },
+    { id: 'datacatalog', label: 'Data Catalog',      icon: 'library' },
     { id: 'metrics',    label: 'Metrics Catalog',    icon: 'layers' },
     { id: 'freshness',  label: 'Freshness & SLAs',   icon: 'timer' },
     { id: 'explorer',   label: 'Raw data explorer',  icon: 'file-search' },
@@ -44,9 +44,9 @@ const NAV = [
 
 const ROLES = [
   { id: 'liveops',  label: 'LiveOps manager', color: '#f05a22', initial: 'LM', defaultPage: 'monitor',
-    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'master']) },
+    pages: new Set(['monitor', 'campaigns', 'analytics', 'builder', 'metrics', 'datacatalog']) },
   { id: 'data',     label: 'Data / ML engineer', color: '#a855f7', initial: 'DS', defaultPage: 'mapping',
-    pages: new Set(['sources', 'mapping', 'master', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
+    pages: new Set(['sources', 'mapping', 'datacatalog', 'metrics', 'freshness', 'explorer', 'features', 'models', 'builder']) },
   { id: 'producer', label: 'Game producer', color: '#059669', initial: 'GP', defaultPage: 'analytics',
     pages: new Set(['monitor', 'campaigns', 'analytics', 'metrics']) },
   { id: 'all',      label: 'All access', color: '#0a0a0a', initial: 'AD',  defaultPage: 'mapping',
@@ -588,8 +588,8 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case 'sources':    return <Sources />;
-      case 'mapping':    return <MappingStudio />;
-      case 'master':     return <MasterTables />;
+      case 'mapping':    return <MappingStudio setPage={setPage} />;
+      case 'datacatalog': return <DataCatalog setPage={setPage} />;
       case 'metrics':    return <MetricsCatalog setPage={setPage} />;
       case 'freshness':  return <FreshnessSLAs />;
       case 'explorer':   return <RawExplorer />;

@@ -39,4 +39,14 @@ export class TrinoExplorerController {
   ) {
     return this.svc.sampleTable(schema, table, limit ? Number(limit) : 50, catalog);
   }
+
+  @Get('profile/:catalog/:schema/:table/:column')
+  profile(
+    @Param('catalog') catalog: string,
+    @Param('schema') schema: string,
+    @Param('table') table: string,
+    @Param('column') column: string,
+  ) {
+    return this.svc.profileColumn(catalog, schema, table, column);
+  }
 }

@@ -10,6 +10,7 @@ export * from './metric.js';
 export * from './source.js';
 export * from './mapping.js';
 export * from './master-table.js';
+export * from './catalog.js';
 export * from './freshness.js';
 export * from './segment.js';
 export * from './feature.js';

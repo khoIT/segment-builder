@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { masterTables, buildJobs, mappings, masterUserProfileDx } from '../db/schema';
 import type { Db } from '../db/client';
 import { InjectDb } from '../db/client';
+import { DataCatalogService } from '../catalog/data-catalog.service';
 
 // Build flow:
 //   POST /master-tables/:id/build → orchestrator.start(masterTableId)
@@ -37,6 +38,7 @@ export class BuildOrchestrator {
   constructor(
     @InjectDb() private readonly db: Db,
     private readonly cfg: ConfigService,
+    private readonly catalog: DataCatalogService,
   ) {}
 
   async start(masterTableId: string, userToken: string): Promise<{ jobId: string }> {
@@ -158,6 +160,15 @@ export class BuildOrchestrator {
         columns: ((spec as { outputColumns?: unknown }).outputColumns ?? null) as never,
         updatedAt: new Date(),
       }).where(eq(masterTables.id, masterTableId));
+
+      // Surface the built artefact in the Data Catalog. Failure logs
+      // a warning but doesn't fail the build itself — catalog metadata
+      // is layered on top, not load-bearing.
+      try {
+        await this.catalog.upsertFromMasterTable(masterTableId);
+      } catch (e) {
+        this.log.warn(`[build ${jobId}] catalog upsert failed: ${(e as Error).message}`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.log.error(`[build ${jobId}] ${msg}`);

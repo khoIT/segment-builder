@@ -1,6 +1,8 @@
 import React from 'react';
 import { T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader } from './theme.jsx';
 import { BR_SOURCES, BR_RAW_LOGS, BR_STANDARD_LOGS, BR_MAPPINGS, BR_PLAYBOOKS } from './bedrockData.jsx';
+import { useMasterTables, useBuildMasterTable } from './api/hooks.js';
+import { BuildProgressRibbon } from './mapping-studio/build-progress-ribbon.jsx';
 
 /* global React, T, Icon, useLucide, Button, Badge, Card, Input, Select, Switch, Tabs, Kpi, SectionHeader, BR_SOURCES, BR_RAW_LOGS, BR_STANDARD_LOGS, BR_MAPPINGS, BR_PLAYBOOKS */
 
@@ -36,12 +38,35 @@ function ConfidenceBar({ pct }) {
   );
 }
 
-function MappingStudio() {
+function MappingStudio({ setPage }) {
   const [topic, setTopic] = React.useState('moneyflow_ptg');
   const [mode, setMode] = React.useState('batch'); // batch | realtime
   const [playbook, setPlaybook] = React.useState('moneyflow');
   const [showPlaybooks, setShowPlaybooks] = React.useState(false);
+  // Active build state — shown as ribbon under the header.
+  const [activeBuild, setActiveBuild] = React.useState(null);
   useLucide(topic + mode);
+
+  // Resolve master_table for the topic's game (suffix _ptg/_cfm/_tfb).
+  const gameSuffix = topic.includes('_ptg') ? 'ptg' : topic.includes('_cfm') ? 'cfm' : topic.includes('_tfb') ? 'tfb' : 'cfm';
+  const mtListQ = useMasterTables();
+  const mtForGame = (mtListQ.data?.items ?? []).find(
+    (mt) => (mt.gameId ?? '').toLowerCase() === gameSuffix,
+  );
+  const buildMut = useBuildMasterTable();
+
+  function saveAndBuild() {
+    if (!mtForGame || activeBuild || buildMut.isPending) return;
+    buildMut.mutate(mtForGame.id, {
+      onSuccess: (data) => {
+        setActiveBuild({ jobId: data.jobId, masterTableId: mtForGame.id, name: mtForGame.name });
+      },
+      onError: (err) => {
+        // eslint-disable-next-line no-console
+        console.error('[saveAndBuild] failed', err);
+      },
+    });
+  }
 
   const raw = BR_RAW_LOGS[topic];
   const std = BR_STANDARD_LOGS[topic];
@@ -63,9 +88,33 @@ function MappingStudio() {
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="outline" size="sm" leftIcon="git-branch">v4 · draft</Button>
           <Button variant="outline" size="sm" leftIcon="play">Dry-run</Button>
-          <Button variant="primary" size="sm" leftIcon="check">Publish mapping</Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={activeBuild ? 'loader-2' : 'play'}
+            disabled={!mtForGame || activeBuild != null || buildMut.isPending}
+            onClick={saveAndBuild}
+          >
+            {activeBuild ? 'Building…' : 'Save & Build'}
+          </Button>
         </div>
       </div>
+
+      {activeBuild && (
+        <BuildProgressRibbon
+          masterTableId={activeBuild.masterTableId}
+          jobId={activeBuild.jobId}
+          masterTableName={activeBuild.name}
+          onSettled={(status) => {
+            // Keep ribbon visible briefly on completion so users see it.
+            if (status === 'failed') setTimeout(() => setActiveBuild(null), 8000);
+          }}
+          onViewCatalog={() => {
+            setActiveBuild(null);
+            setPage?.('datacatalog');
+          }}
+        />
+      )}
 
       {/* Sub-toolbar: topic + mode */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#fff', borderRadius: 10, border: `1px solid ${T.n200}` }}>
