@@ -2,19 +2,24 @@ import React from 'react';
 import { T, Icon, Card } from '../theme.jsx';
 import { useDataCatalogTable } from '../api/hooks.js';
 import { SourceMultiSelect } from './source-multi-select.jsx';
-import { JoinKeyPicker } from './join-key-picker.jsx';
+import { TemplatesFromCatalog } from './templates-from-catalog.jsx';
 import { aliasForIndex, pickDefaultKey, pickJoinColumns } from './source-helpers.js';
 
 // Step 1: pick source tables (1–3) + join keys for additional sources.
-// Props: sources, joins (from index), allTables (raw_event), loading, onChange({sources,joins})
+// Layout (top → bottom):
+//   1. Section heading + hint
+//   2. SourceMultiSelect — stacked source cards (joins inline within each
+//      joined card; no separate "Join conditions" panel anymore)
+//   3. SamplePreview for primary source
+//   4. TemplatesFromCatalog — collapsible reference of existing metrics
+//
+// Props: sources, joins, allTables, loading, onChange, onUseTemplate
 
-export function StepSource({ sources, joins, allTables, loading, onChange }) {
-  // Fetch detail for the primary source (for the sample preview).
+export function StepSource({ sources, joins, allTables, loading, onChange, onUseTemplate }) {
   const primaryTable = sources[0]?.table ?? null;
   const tableDetailQ = useDataCatalogTable(primaryTable);
   const tableDetail = tableDetailQ.data;
 
-  // Collect table details for all selected sources (for join column pickers).
   const tableDetailsMap = useTableDetailsMap(sources);
 
   function handleAdd(catalogTable) {
@@ -26,12 +31,10 @@ export function StepSource({ sources, joins, allTables, loading, onChange }) {
     const newSource = { table: catalogTable.id, alias, keyColumn };
     const newSources = [...sources, newSource];
 
-    // Build join for the new source against the primary source.
     let newJoins = [...joins];
     if (newSources.length > 1) {
       const primarySrc = newSources[0];
-      const primaryDetail = tableDetailsMap[primarySrc.table];
-      const primaryCols = primaryDetail?.columns ?? [];
+      const primaryCols = tableDetailsMap[primarySrc.table]?.columns ?? [];
       const { leftCol, rightCol, autoDetected } = pickJoinColumns(primaryCols, cols);
       newJoins = [
         ...joins,
@@ -50,61 +53,58 @@ export function StepSource({ sources, joins, allTables, loading, onChange }) {
     const removedAlias = sources[idx]?.alias;
     let newSources = sources.filter((_, i) => i !== idx);
 
-    // If we removed the primary (idx=0), re-alias all remaining sources.
     if (idx === 0 && newSources.length > 0) {
       newSources = newSources.map((s, i) => ({ ...s, alias: aliasForIndex(i) }));
     }
 
-    // Drop any joins referencing the removed alias; update aliases if primary was removed.
     let newJoins = joins.filter(
       (j) => j.leftAlias !== removedAlias && j.rightAlias !== removedAlias,
     );
     if (idx === 0 && newSources.length > 0) {
-      // Rebuild joins with re-aliased sources (simpler: drop all and re-derive).
       newJoins = rebuildJoinsAfterPrimaryRemoval(newSources, tableDetailsMap);
     }
 
     onChange({ sources: newSources, joins: newJoins });
   }
 
-  function handleJoinsChange(newJoins) {
-    onChange({ sources, joins: newJoins });
+  function handleSetKey(idx, col) {
+    const newSources = sources.map((s, i) => i === idx ? { ...s, keyColumn: col } : s);
+    onChange({ sources: newSources, joins });
   }
 
-  const sampleCols = tableDetail?.sample?.columns ?? [];
-  const sampleRows = tableDetail?.sample?.rows ?? [];
+  function handleSetJoin(joinIdx, pair) {
+    const next = joins.map((j, i) => i === joinIdx
+      ? { ...j, on: [pair], autoDetected: false }
+      : j);
+    onChange({ sources, joins: next });
+  }
+
   const rawTables = (allTables ?? []).filter((t) => t.layer === 'raw_event');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 880 }}>
       <SectionHead
         label="1 · Pick source tables"
-        hint="Select up to 3 raw-event tables. Additional sources are joined on a shared key."
+        hint="Pick at least one raw-event table. Add up to 2 more if your metric needs to join data across tables (e.g. logins + recharges)."
       />
 
       <SourceMultiSelect
         sources={sources}
+        joins={joins}
         allTables={rawTables}
         loading={loading}
         onAdd={handleAdd}
         onRemove={handleRemove}
+        onSetKey={handleSetKey}
+        onSetJoin={handleSetJoin}
       />
 
-      {sources.length > 1 && (
-        <JoinKeyPicker
-          sources={sources}
-          joins={joins}
-          tableDetails={tableDetailsMap}
-          onChange={handleJoinsChange}
-        />
-      )}
-
       {tableDetail && <SamplePreview tableDetail={tableDetail} />}
+
+      <TemplatesFromCatalog onUseTemplate={onUseTemplate} />
     </div>
   );
 }
-
-// ─── Sub-components & helpers ────────────────────────────────────────────────
 
 function SectionHead({ label, hint }) {
   return (
@@ -157,7 +157,6 @@ function SamplePreview({ tableDetail }) {
   );
 }
 
-// Fixed 3 hook calls — React hook count must be stable regardless of sources.length.
 function useTableDetailsMap(sources) {
   const t0 = useDataCatalogTable(sources[0]?.table ?? null);
   const t1 = useDataCatalogTable(sources[1]?.table ?? null);
@@ -171,9 +170,8 @@ function useTableDetailsMap(sources) {
   }, [sources, t0.data, t1.data, t2.data]);
 }
 
-// Re-derive joins after primary removal (best-effort; empty cols if detail not loaded).
 function rebuildJoinsAfterPrimaryRemoval(newSources, tableDetailsMap) {
-  return newSources.slice(1).map((secondary, i) => {
+  return newSources.slice(1).map((secondary) => {
     const primary = newSources[0];
     const { leftCol, rightCol, autoDetected } = pickJoinColumns(
       tableDetailsMap[primary.table]?.columns ?? [],

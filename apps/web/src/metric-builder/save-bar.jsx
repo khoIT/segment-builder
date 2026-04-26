@@ -84,6 +84,15 @@ export function SaveBar({ spec, meta, setMeta, canAdvance, step, totalSteps, onB
         </span>
       )}
 
+      {/* Inline reason when the active step's gate isn't satisfied —
+          so the user knows WHY Next/Save is disabled without hunting. */}
+      {!canAdvance && (
+        <NeedHint reason={missingReasonForStep(step, spec)} />
+      )}
+      {isLast && canAdvance && !meta.name.trim() && (
+        <NeedHint reason="metric name" />
+      )}
+
       <Button variant="ghost" onClick={onBack} disabled={step === 0}>
         <Icon name="chevron-left" size={14} /> Back
       </Button>
@@ -99,4 +108,49 @@ export function SaveBar({ spec, meta, setMeta, canAdvance, step, totalSteps, onB
       )}
     </div>
   );
+}
+
+// Compact inline pill rendered next to the disabled Next/Save button.
+function NeedHint({ reason }) {
+  if (!reason) return null;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '4px 9px', borderRadius: 12,
+      background: '#fef3c7', color: '#92400e',
+      border: '1px solid #fcd34d',
+      fontSize: 11, fontFamily: T.fSans,
+    }}>
+      <Icon name="alert-circle" size={11} color="#92400e" />
+      <span>Need: {reason}</span>
+    </span>
+  );
+}
+
+// Returns the first unmet requirement for `step`, in user-friendly terms.
+function missingReasonForStep(step, spec) {
+  if (step === 0) {
+    if (!spec.sources?.length) return 'pick at least one source table';
+    const primarySrc = spec.sources[0];
+    if (!primarySrc.keyColumn) return 'key column for primary source';
+    const badJoin = (spec.joins ?? []).find((j) => !j.on?.[0]?.leftCol || !j.on?.[0]?.rightCol);
+    if (badJoin) return 'join key for additional source';
+    return null;
+  }
+  if (step === 1) {
+    if (!spec.aggregation?.fn) return 'pick aggregation function';
+    if (spec.aggregation.fn !== 'count' && !spec.aggregation.column) return 'aggregation column';
+    return null;
+  }
+  if (step === 2) {
+    if (!spec.window?.eventDateColumn) return 'event date column';
+    if (!spec.sources?.[0]?.keyColumn) return 'key column';
+    if (!(spec.window?.days > 0)) return 'window length (days)';
+    return null;
+  }
+  if (step === 3) {
+    if (!spec.schedule?.expr) return 'schedule expression';
+    return null;
+  }
+  return null;
 }

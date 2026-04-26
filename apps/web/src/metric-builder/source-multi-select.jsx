@@ -180,11 +180,15 @@ function AddSourcePlaceholder({ allTables, loading, pickedIds, countLabel, onPic
       </button>
 
       {open && (
+        // Drop the maxWidth — with left:0/right:0 anchoring, capping width
+        // at 480 leaves the right side of the parent uncovered, so the
+        // templates panel sitting below this button bleeds through behind
+        // the dropdown. Letting it span the full button width fixes the
+        // bleed-through and lines the box up with the dashed Add button.
         <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50,
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 100,
           background: T.n0, border: `1px solid ${T.n200}`, borderRadius: 10,
           boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-          maxWidth: 480,
         }}>
           <div style={{ padding: '8px 10px', borderBottom: `1px solid ${T.n100}` }}>
             <input

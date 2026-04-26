@@ -33,6 +33,25 @@ function emptySpec() {
   };
 }
 
+// Merge a catalog metric spec on top of a fresh empty spec so any field
+// the template is missing (older specs may omit output/filters) is filled
+// with builder defaults — keeps the preview from crashing on partial specs.
+function mergeTemplateSpec(tpl) {
+  const base = emptySpec();
+  if (!tpl || typeof tpl !== 'object') return base;
+  return {
+    ...base,
+    ...tpl,
+    sources: Array.isArray(tpl.sources) ? tpl.sources : base.sources,
+    joins: Array.isArray(tpl.joins) ? tpl.joins : base.joins,
+    window: { ...base.window, ...(tpl.window ?? {}) },
+    aggregation: { ...base.aggregation, ...(tpl.aggregation ?? {}) },
+    filters: Array.isArray(tpl.filters) ? tpl.filters : base.filters,
+    schedule: { ...base.schedule, ...(tpl.schedule ?? {}) },
+    output: { ...base.output, ...(tpl.output ?? {}) },
+  };
+}
+
 export function MetricBuilder({ setPage }) {
   const hash = useHashState();
   const catalogQ = useDataCatalog({ layer: 'raw_event' });
@@ -107,6 +126,18 @@ export function MetricBuilder({ setPage }) {
                 const primaryChanged = spec.sources[0]?.table !== sources[0]?.table;
                 patchSpec({ sources, joins, ...(primaryChanged ? { window: { ...spec.window, eventDateColumn: '' }, aggregation: { fn: 'count', column: null } } : {}) });
               }}
+              onUseTemplate={(tplSpec, tplMeta) => {
+                // Replace builder state with the template's spec so the
+                // user can edit + rename + save. Keep current name unless
+                // it's blank (avoid surprising overwrite of typed name).
+                const safe = mergeTemplateSpec(tplSpec);
+                setSpec(safe);
+                setMeta((m) => ({
+                  name: m.name || `${tplMeta?.name ?? 'metric'} (copy)`,
+                  category: tplMeta?.category || m.category,
+                }));
+                setStep(0);
+              }}
             />
           )}
           {step === 1 && (
@@ -133,7 +164,7 @@ export function MetricBuilder({ setPage }) {
         </div>
       </div>
 
-      <SpecPreview spec={spec} />
+      <SpecPreview spec={spec} meta={meta} onJumpStep={(i) => i != null && setStep(i)} />
 
       <SaveBar
         spec={spec}

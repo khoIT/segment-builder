@@ -1,13 +1,16 @@
 import React from 'react';
 import { T, Icon } from '../theme.jsx';
 import { useSqlPreview } from '../api/hooks.js';
+import { RequirementsChecklist } from './requirements-checklist.jsx';
 
-// Right rail: sources summary + live MetricSpec JSON + rendered SQL.
+// Right rail: requirements checklist + sources summary + live MetricSpec
+// JSON + rendered SQL. The checklist makes the minimum-setup contract
+// explicit (no more guessing why Next is greyed out).
 // SQL hits a debounced preview-sql endpoint that round-trips the spec
-// through the compiler (no execution). The compiler now handles multi-source
-// specs natively (P3). Missing required fields → "not yet ready" state.
+// through the compiler (no execution). The compiler handles multi-source
+// specs natively. Missing required fields → "not yet ready" state.
 
-export function SpecPreview({ spec }) {
+export function SpecPreview({ spec, meta, onJumpStep }) {
   const primarySource = spec.sources?.[0];
   const ready = !!primarySource?.table
     && !!primarySource?.keyColumn
@@ -34,6 +37,10 @@ export function SpecPreview({ spec }) {
       </div>
 
       <div style={{ flex: 1, overflow: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+        {/* Requirements checklist — visible from step 0 so user always
+            knows what's still needed before save is unlocked. */}
+        <RequirementsChecklist spec={spec} meta={meta} onJump={onJumpStep} />
 
         {/* Sources summary — shown as soon as at least one source is picked */}
         {spec.sources?.length > 0 && (
